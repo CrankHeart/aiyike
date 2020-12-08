@@ -1,0 +1,600 @@
+<!--项目管理-未完结项目详情页-->
+<template>
+	<section class="wrap" v-show="pageShow">
+		<div class="backToPre">
+			<span @click="backToPre">
+				<i class="el-icon-arrow-left"></i>
+				<span class="return">返回</span>
+			</span>
+		</div>
+		<div class="wrap-details">
+			<herghost-scroll class="hgscroll-pdlr__28-28">
+				<div class="details">
+					<div class="page-bg">
+						<div v-show="activeIndex==3" class="middle-area middle">
+							<div class="ayk-message success">
+								<p class="ayk-message__text">团队信息编辑成功！</p>
+							</div>
+						</div>
+						<UploadAvator :visible.sync="txVisible" @imgData='txImgData'></UploadAvator>
+						<UploadAvator :visible.sync="busVisible" cropStyle="rect" title="上传营业执照" @imgData='busImgData' :options="{
+							aspectRatio: null
+						}"></UploadAvator>
+						<el-form v-show="activeIndex != 3" :model="ruleForm" :rules="rules" ref="ruleForm1" label-width="90px" label-position="left" class="ayk-form">
+							<div class="tx">
+								<span class="upload_img" @click="uploadTx">
+									<img v-if="txUrl" class="circlex" :src="txUrl"></img>
+									<el-input class="hidden" v-model="ruleForm.bus.logo" readonly placeholder="头像地址"></el-input>
+								</span>
+							</div>
+							<template v-if="activeIndex == 1">
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item prop="bus.name" label="公司名称：" :rules="[{required: true,message: '请输入公司名称',trigger: 'blur'}]" label-width="64px">
+											<el-input v-model="ruleForm.bus.name" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item prop="bus.category" :rules="[{required: true,message: '请选择公司类型',trigger: 'blur'}]" label="公司类型：">
+											<el-select v-model="ruleForm.bus.category" placeholder="请选择">
+												<el-option v-for="(item,index) in busType" :key="index" :label="item.name" :value="item.value">
+												</el-option>
+											</el-select>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item prop="bus.legalName" label="法人代表：" :rules="[{required: true,message: '请输入法人代表',trigger: 'blur'}]" label-width="64px">
+											<el-input v-model="ruleForm.bus.legalName" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item prop="bus.scope" label="公司规模：" :rules="[{required: true,message: '请选择公司规模',trigger: 'blur'}]">
+											<el-select v-model="ruleForm.bus.scope" placeholder="请选择">
+												<el-option v-for="(item,index) in busScope" :key="index" :label="item.name" :value="item.value">
+												</el-option>
+											</el-select>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item prop="bus.address" label="公司地址：" :rules="[{required: true,message: '请输入公司地址',trigger: 'blur'}]" label-width="64px">
+											<el-input v-model="ruleForm.bus.address" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item prop="bus.phone" label="公司电话：" :rules="busPhoneRules()">
+											<el-input v-model="ruleForm.bus.phone" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item label="公司传真：" label-width="64px">
+											<el-input v-model="ruleForm.bus.fax" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item label="银行账号：" prop="bank.bankCode" :rules="[{min: 13, max: 19, message: '请输入正确的银行帐号',trigger: 'blur'}]">
+											<el-input v-model="ruleForm.bank.bankCode" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item label="开户行：" label-width="64px">
+											<el-select v-model="ruleForm.bank.bankName" placeholder="请选择">
+												<el-option v-for="(item,index) in bankNames" :key="index" :label="item.name" :value="item.name">
+												</el-option>
+											</el-select>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item label="收款人：">
+											<el-input v-model="ruleForm.bank.accountName" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item label="推荐人：" label-width="64px">
+											<el-input v-model="ruleForm.bus.recommend" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item prop="bus.cooperate" label="合作次数：" :rules="[{required: true,message: '请输入合作次数',trigger: 'blur'}]">
+											<el-input v-model="ruleForm.bus.cooperate" placeholder="请输入"></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<el-row :gutter="40">
+									<el-col :span="12">
+										<el-form-item prop="labels" label="业务范围：" label-width="64px">
+											<MultipleSelect search v-model="labels" :options="scopeBusOptions" :fieldsOptinos="{label:'name',value:'id'}"></MultipleSelect>
+										</el-form-item>
+									</el-col>
+									<el-col :span="12">
+										<el-form-item label="上传营业执照：">
+											<el-input class="hidden" v-model="ruleForm.bus.license"></el-input>
+											<el-input readonly placeholder="添加文件" class="addclick-input" @click.native="uploadBusLic"></el-input>
+										</el-form-item>
+									</el-col>
+								</el-row>
+								<div class="btn-group">
+									<el-button class="submitbtn" type="primary" @click="next">下一步</el-button>
+									<el-button class="cancelbtn" @click="cancel">取消</el-button>
+								</div>
+							</template>
+						</el-form>
+						<template v-if="activeIndex == 2">
+							<el-form class="ayk-form ayk-form__novlilabel" :model="ruleForm" ref="ruleForm2" label-width="44px" label-position="left">
+								<div v-for="(item, index) in ruleForm.contact">
+									<el-row :gutter="10">
+										<el-col :span="6">
+											<el-form-item label="姓名：" class="">
+												<el-input v-model="item.name" class="" placeholder="请输入"></el-input>
+											</el-form-item>
+										</el-col>
+										<el-col :span="6">
+											<el-form-item label="电话：" class="" :prop="'contact.' + index + '.phone'" :rules="[{ required: true, message: '请输入手机号码', trigger: 'blur' },{pattern: /^(13[0-9]|14[579]|15[0-3,5-9]|16[6]|17[0135678]|18[0-9]|19[89])\d{8}$/,message: '请输入正确的手机号码',trigger: 'blur'}]">
+												<el-input v-model="item.phone" class="" placeholder="请输入"></el-input>
+											</el-form-item>
+										</el-col>
+										<el-col :span="6">
+											<el-form-item label="邮箱：" class="" :prop="'contact.' + index + '.email'" :rules="[{ required: true, message: '请输入邮箱地址', trigger: 'blur' },{type: 'email',message: '请输入正确的邮箱',trigger: 'blur'}]">
+												<el-input v-model="item.email" class="" placeholder="请输入"></el-input>
+											</el-form-item>
+										</el-col>
+										<el-col :span="6">
+											<el-form-item label="职位：" class="">
+												<el-input v-model="item.position" class="" placeholder="请输入"></el-input>
+												<i @click="delclick" v-if="index != 0 && index == ruleForm.contact.length-1" class="el-icon-delete level_remove"></i>
+											</el-form-item>
+										</el-col>
+									</el-row>
+								</div>
+								<div>
+									<el-row :gutter="10">
+										<el-col :span="6">
+											<el-form-item label=" ">
+												<el-input class="addclick-input" placeholder="新建联系人" readonly @click.native="addclick"></el-input>
+											</el-form-item>
+										</el-col>
+									</el-row>
+								</div>
+								<div class="btn-group">
+									<el-button class="submitbtn" type="primary" @click="last">上一步</el-button>
+									<el-button class="submitbtn" type="primary" @click="submit">提交</el-button>
+									<el-button class="cancelbtn" @click="cancel">取消</el-button>
+								</div>
+							</el-form>
+						</template>
+					</div>
+					<div style="height: 24px;"></div>
+				</div>
+			</herghost-scroll>
+		</div>
+	</section>
+</template>
+
+<script>
+	let MultipleSelect = () =>
+		import('@/components/select/MultipleSelect.vue')
+	let HerGhostScroll = () =>
+		import('@/components/scroll/HerGhostScroll.vue')
+	let UploadAvator = () =>
+		import('@/modules/Org/uc/UploadAvator.vue')
+
+	let fromRoute = null
+	export default {
+		name: 'OutItemMgtDetails',
+		data() {
+			return {
+				labels: [],
+				bankNames: '',
+				busType: '',
+				busScope: '',
+				userId: this.$route.params.id.split("-")[0],
+				activeIndex: 1,
+				pageShow: false,
+				txVisible: false,
+				busVisible: false,
+				scopeBusOptions: [],
+				ruleForm: {
+					bus: {
+						id: parseInt(this.$route.params.id.split('-')[0]),
+						logo: '',
+						name: '',
+						category: '',
+						legalName: '',
+						scope: '',
+						address: '',
+						phone: '',
+						fax: '',
+						recommend: '',
+						cooperate: '',
+						license: '',
+					},
+					bank: {
+						accountName: '',
+						bankName: '',
+						accountName: '',
+					},
+					labels: [],
+
+					contact: [{
+						name: "",
+						phone: "",
+						email: "",
+						position: ""
+					}]
+				},
+				rules: {
+					labels: [{
+						required: true,
+						type: 'array',
+						message: '请选择业务范围',
+						trigger: 'blur'
+					}]
+				}
+			};
+		},
+		beforeRouteEnter(to, from, next) {
+			fromRoute = from
+			next()
+		},
+		components: {
+			MultipleSelect,
+			'herghost-scroll': HerGhostScroll,
+			UploadAvator
+		},
+		watch: {
+			labels(val) {
+				this.ruleForm.labels = []
+				this.scopeBusOptions.forEach((item, index, arr) => {
+					if(val.indexOf(item.id) != -1) {
+						this.ruleForm.labels.push(item)
+					}
+				})
+			},
+		},
+		created() {
+			if(fromRoute.path == '/') {
+				this.$router.go(-2)
+			} else {
+				this.pageShow = true
+			}
+		},
+		beforeDestroy() {},
+		computed: {
+			txUrl() {
+				if(this.ruleForm.bus.logo) {
+					return `${window.Config.StaticUrl}${this.ruleForm.bus.logo}`
+				}
+				return ``
+			}
+		},
+		mounted() {
+			this.$nextTick(() => {
+				this.initTypeAndScope()
+				this.initLabels(this.editDataHandler)
+			})
+		},
+		methods: {
+			busPhoneRules() {
+				return [
+					{pattern: /^0\d{2,3}-[1-9]\d{6,7}$/, message: '请输入正确的公司电话', trigger: 'blur,change' },
+				]
+			},
+			editDataHandler() {
+				let teamDetails = Object.deepClone(this.$store.getters.teamDetails)
+				if(Object.isEmpty(teamDetails.bus.labels)) {
+					teamDetails.bus.labels = []
+				}
+				if(String.isString(teamDetails.bus.labels)) {
+					teamDetails.bus.labels = JSON.parse(teamDetails.bus.labels)
+				}
+				teamDetails.bus.labels.forEach((item, index) => {
+					this.labels.push(item.labelId)
+				})
+				teamDetails.bus.cooperate = `${teamDetails.bus.cooperate}`
+				if(teamDetails.bus.legalName !== null){
+					teamDetails.bus.legalName = `${teamDetails.bus.legalName}`
+				}else{
+					teamDetails.bus.legalName = ''
+				}
+				if(teamDetails.bus.scope !== null){
+					teamDetails.bus.scope = `${teamDetails.bus.scope}`
+				}else{
+					teamDetails.bus.scope = ''
+				}
+				if(teamDetails.bus.category !== null){
+					teamDetails.bus.category = `${teamDetails.bus.category}`
+				}else{
+					teamDetails.bus.category = ''
+				}
+				this.ruleForm.bus = teamDetails.bus
+				if(teamDetails.bank) {
+					this.ruleForm.bank = teamDetails.bank
+				}
+				this.ruleForm.contact = teamDetails.busContactList
+			},
+			initLabels(callback) {
+				this.$http.post("/api/label/queryLabelAll", {}, {
+					emulateJSON: true
+				}).then((res) => {
+					this.scopeBusOptions = res.data.result
+					callback && callback.call(this)
+				}).catch((err) => {})
+			},
+			initTypeAndScope() {
+				this.$http.post('/api/dictionaryCategory/queryDictionByCode', {
+						code: 'category'
+					}, {
+						emulateJSON: true
+					}).then((res) => {
+						let data = res.data;
+						if(data.success) {
+							this.busType = data.result;
+						}
+					}).catch((err) => {}),
+					this.$http.post('/api/dictionaryCategory/queryDictionByCode', {
+						code: 'scope'
+					}, {
+						emulateJSON: true
+					}).then((res) => {
+						let data = res.data;
+						if(data.success) {
+							this.busScope = data.result;
+						}
+					}).catch((err) => {}),
+					this.$http.post('/api/bankInfo/queryBankInfo', {}, {
+						emulateJSON: true
+					}).then((res) => {
+						let data = res.data;
+						if(data.success) {
+							this.bankNames = data.result;
+						}
+					}).catch((err) => {})
+			},
+			addclick() {
+				this.ruleForm.contact.push({
+					name: "",
+					phone: "",
+					email: "",
+					position: ""
+				})
+			},
+			delclick() {
+				if(this.ruleForm.contact.length) {
+					this.ruleForm.contact.pop()
+				}
+			},
+			obtainScopeBusOptions() {
+
+			},
+			uploadTx() {
+				this.txVisible = true
+			},
+			uploadBusLic() {
+				this.busVisible = true
+			},
+			txImgData(data) {
+				this.ruleForm.bus.logo = data
+				//this.$refs.circlex.src = Config.StaticUrl + data
+			},
+			busImgData(data) {
+				this.ruleForm.bus.license = data
+
+			},
+			last() {
+				this.activeIndex = 1
+			},
+			next() {
+				console.log(this.$refs)
+				this.$refs['ruleForm1'].validate((valid) => {
+					if(valid) {
+						this.activeIndex = 2
+					} else {
+						return false;
+					}
+				})
+			},
+			submit() {
+				this.$http.post("/api/bus/editBus", JSON.stringify(this.ruleForm), {
+					emulateJSON: true
+				}).then((res) => {
+					if(res.data.success) {
+						this.activeIndex = 3
+					} else {
+						this.$message({
+							message: '编辑失败',
+							customClass: 'error'
+						})
+					}
+				}).catch((err) => {});
+			},
+			cancel() {
+				this.$router.go(-1);
+			},
+			backToPre() {
+				this.$router.go(-1);
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.ayk-message {
+		display: inline-block;
+	}
+	
+	.ayk-message__text {
+		font-size: 14px;
+		line-height: 24px
+	}
+	
+	.middle-area {
+		text-align: center;
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		z-index: 2;
+	}
+	
+	.level_remove {
+		color: #999;
+		cursor: pointer;
+		margin-left: 6px;
+		vertical-align: middle;
+		font-size: 12px;
+		position: absolute;
+		right: -20px;
+		top: 0;
+		bottom: 0;
+		line-height: 36px;
+	}
+	
+	.w140 {
+		width: 140px;
+	}
+	
+	.btn-group {
+		margin-top: 60px;
+		margin-bottom: 60px;
+		text-align: center;
+	}
+	
+	.tx {
+		text-align: center;
+		padding-top: 68px;
+		padding-bottom: 68px;
+	}
+	
+	.upload_img {
+		display: inline-block;
+		width: 80px;
+		height: 80px;
+		margin: 0 auto;
+		position: relative;
+		border-radius: 50%;
+		background-color: #D8D8D8;
+		border: 1px solid #979797;
+		overflow: hidden;
+		cursor: pointer;
+		vertical-align: middle;
+	}
+	
+	.upload_img .circlex {
+		width: 100%;
+		height: 100%;
+	}
+	
+	.ayk-form .el-select {
+		display: block;
+	}
+	
+	.page-bg {
+		margin: auto;
+		min-height: 100%;
+		padding: 20px 80px 32px 80px;
+		position: relative;
+	}
+	
+	.wrap-details {
+		box-sizing: border-box;
+		height: 100%;
+		margin-top: -61px;
+		padding-top: 61px;
+	}
+	
+	.mt10 {
+		margin-top: 10px;
+	}
+	
+	.wrap {
+		height: 100%;
+		background: #f8f9fb;
+		padding: 0 0px 0px;
+		overflow: hidden;
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+	}
+	
+	.backToPre {
+		font-size: 18px;
+		height: 60px;
+		line-height: 60px;
+		color: #000;
+		border-bottom: 1px solid #F1F2F3;
+		margin-left: 28px;
+		margin-right: 28px;
+	}
+	
+	.backToPre>span {
+		cursor: pointer;
+	}
+	
+	.details-wrap {
+		/*padding-right: 56px;*/
+	}
+	
+	.layout-container {
+		overflow-x: hidden;
+		height: 100%;
+		margin-top: -41px;
+		padding-top: 41px;
+		/*margin-left: -56px;
+		padding-left: 56px;*/
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+	}
+	
+	.layout-in {
+		overflow-x: hidden;
+		overflow-y: scroll;
+		height: 100%;
+		padding-left: 28px;
+		padding-right: 1000px;
+	}
+	
+	.mb24 {
+		margin-bottom: 24px;
+	}
+	
+	.details_left {
+		float: left;
+		min-height: 100%;
+		background: #fff;
+		margin-bottom: 24px;
+	}
+	
+	.details_right {
+		min-height: 100%;
+		margin-left: 374px;
+		/*margin-bottom: 24px;*/
+	}
+	
+	.details {
+		padding-top: 24px;
+		height: 100%;
+		box-sizing: border-box;
+		padding-bottom: 24px;
+		/*padding-bottom: 100px;*/
+	}
+	
+	.addclick-input:after {
+		right: auto;
+		margin-left: -42px;
+	}
+	
+	.multiple-select {
+		width: auto !important;
+	}
+</style>

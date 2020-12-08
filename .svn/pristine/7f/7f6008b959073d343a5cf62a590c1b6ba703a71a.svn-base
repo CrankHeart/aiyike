@@ -1,0 +1,203 @@
+<!--项目管理-未完结项目详情-左侧模块-左下角按钮-更换项目经理-->
+<template>
+	<!--更换项目经理-->
+	<el-dialog title="更换项目经理" :visible.sync="dialogVisible" class="change-manager dialogPosition form-wrap">
+		<el-form ref="form" label-position="left" :model="form" :rules="rules" label-width="72px">
+			<el-form-item label="项目经理:" prop="manager">
+				<el-select v-model="form.manager" placeholder="选择项目经理" v-sicon1>
+					<el-option v-for="item in managers" :label="item.name" :key="item.id" :value="item.id"></el-option>
+				</el-select>
+			</el-form-item>
+			<el-form-item class="note_item nopadding-label" label="备注:" prop="remark">
+				<el-input type="textarea" :rows="3" v-model="form.remark" placeholder="请输入备注信息"></el-input>
+			</el-form-item>
+		</el-form>
+		<span slot="footer" class="dialog-footer">
+	    	<el-button class="surebtn" type="primary" @click="sure('form')">确 定</el-button>
+		    <el-button class="cancelbtn" @click="resetForm()">取 消</el-button>
+	    </span>
+	</el-dialog>
+</template>
+
+<script>
+	export default {
+		name: 'Change_Pm_Dialog',
+		props: {
+			visible: {
+				type: Boolean,
+				default: false
+			}
+		},
+		watch: {
+			visible(val) {
+				this.dialogVisible = val
+			},
+			dialogVisible(val) {
+				if(val) {
+					this.$nextTick(() => {
+						this.queryManagers()
+					})
+				}
+				this.$emit('update:visible', val)
+			}
+		},
+		data() {
+			return {
+				dialogVisible: false,
+				highlightCurrent: true,
+				defaultExpandAll: false,
+				options: [],
+				managers: [], //拥有项目经理角色的人
+				pDefaultProps: {
+					children: 'children',
+					label: 'label',
+				},
+				form: {
+					departId: '',
+					itemId: +this.$route.params.id.split('-')[0],
+					manager: '', //项目经理id
+					remark: '' //备注
+				},
+				rules: {
+					manager: [{
+						required: true,
+						type: 'number',
+						message: '请选择项目经理'
+					}],
+				}
+			};
+		},
+		components: {},
+		mounted: function() {
+			this.dialogVisible = this.visible
+		},
+		methods: {
+			/*			initDepartTree() {
+							this.$http.post("/api/depart/departTree", null, { emulateJSON: true })
+								.then((res) => {
+									let success = res.data.success
+									let result = res.data.result
+									if(success) {
+										this.options = result;
+									}
+								}).catch((err) => {
+									
+								});
+						},*/
+			queryManagers() {
+				this.$http.post("/api/uContact/queryProManager", {
+						"code": "mgr"
+					}, {
+						emulateJSON: true
+					})
+					.then((res) => {
+						var data = res.data;
+						if(data.success) {
+							;
+							this.managers = data.result;
+						}
+					}).catch((err) => {
+						
+					});
+
+			},
+			/*			handleCheckChange(data, checked, indeterminate) {
+							;
+							if(checked){
+								this.queryUcByDepart(data.id)
+							}else{
+								this.users=[];
+							}
+						},*/
+			resetForm() {
+				this.$refs['form'].resetFields();
+				this.defaultExpandAll = false;
+				this.dialogVisible = false
+			},
+			sure(formName) {
+				this.$refs['form'].validate((valid) => {
+					if(valid) {
+						this.dialogVisible = false;
+						this.$http.post("/api/item/changPm", this.form, {
+								emulateJSON: true
+							})
+							.then((res) => {
+								let success = res.data.success
+								let result = res.data.result
+								if(success) {
+									this.$message({
+										message: res.data.message,
+										customClass: 'success'
+									});
+									this.resetForm('form')
+								} else {
+									this.$message({
+										message: res.data.message,
+										type: 'info'
+									});
+								}
+							}).catch((err) => {
+								
+							});
+					} else {
+						;
+						return false;
+					}
+				});
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	/*公用部分*/
+	
+	.department_item {
+		margin-bottom: 4px !important;
+	}
+	
+	.dialogPosition .el-dialog {
+		top: 50%!important;
+		transform: translate(-50%, -50%);
+	}
+	
+	.dialogPosition .el-dialog__title {
+		font-size: 16px;
+		color: #000000;
+		font-weight: normal;
+	}
+	
+	.el-dialog__footer {
+		text-align: center!important;
+	}
+	/*公用部分end*/
+	/*更换项目经理*/
+	
+	.change-manager .el-dialog--small {
+		width: 442px!important;
+	}
+	
+	.change-manager .el-form-item__label {
+		text-align: left!important;
+		color: #000000;
+	}
+	
+	.inputOut {
+		width: 200px;
+	}
+	
+	.inputOut .el-input__inner {
+		background: #F1F1F1;
+	}
+	
+	.change-manager .el-textarea__inner {
+		font-size: 12px!important;
+		height: 56px;
+		resize: none;
+	}
+	
+	.el-form-item {
+		margin-bottom: 10px;
+	}
+	/*更换项目经理end*/
+</style>

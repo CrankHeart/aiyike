@@ -1,0 +1,217 @@
+<!--外围项目管理详情-左侧-外围信息-->
+<template>
+	<div class="perinfo">
+		<div class="line"></div>
+		<div class="out-countprice middle" style="display: none;">
+			<section class="inlineblock">
+				<p class="content">{{leftDetail.totalMoney | moneyformat | nullformat}}</p>
+				<p class="dsc">外围总价(元)</p>
+			</section>
+		</div>
+		<el-row :gutter="14" class="card-text" v-if="ioApplyComplete && HasPermission('moneyAndData')">
+			<el-col :span="12">
+				<div class="grid-content bg-purple middle area">
+					<section>
+						<p class="card-text__title">{{leftDetail.totalMoney | moneyformat | nullformat}}</p>
+						<p class="card-text__tips">外围总价(元)</p>
+					</section>
+				</div>
+			</el-col>
+			<el-col :span="12">
+				<div class="grid-content bg-purple middle area">
+					<section>
+						<p class="card-text__title">{{leftDetail.endTime | timeStamp2Text | nullformat}}</p>
+						<p class="card-text__tips">截止日期</p>
+					</section>
+				</div>
+			</el-col>
+		</el-row>
+		<table>
+			<tr v-if="HasPermission('companyName')">
+				<td class="tip">公司名称:</td>
+				<td>{{leftDetail.company | nullformat}}</td>
+			</tr>
+			<tr v-if="HasPermission('mgrName')">
+				<td class="tip">项目经理:</td>
+				<td>{{leftDetail.manager | nullformat}}</td>
+			</tr>
+			<tr v-if="HasPermission('adinnetName')">
+				<td class="tip">艾艺负责人:</td>
+				<td>{{leftDetail.manager | nullformat}}</td>
+			</tr>
+			<tr v-if="HasPermission('baName')">
+				<td class="tip">商务经理:</td>
+				<td>{{leftDetail.baName | nullformat}}</td>
+			</tr>
+			<tr v-if="HasPermission('isBill')">
+				<td class="tip">是否开发票:</td>
+				<td>{{formaterBill(leftDetail.isBill) | nullformat}}</td>
+			</tr>
+			<tr v-if="HasPermission('cooperationType')">
+				<td class="tip">合作方式:</td>
+				<td>{{formaterType(leftDetail.type) | nullformat}}</td>
+			</tr>
+			<tr v-if="HasPermission('endTime')">
+				<td class="tip">截止日期:</td>
+				<td>{{leftDetail.endTime | timeStamp2Text | nullformat}}</td>
+			</tr>
+		</table>
+	</div>
+</template>
+
+<script>
+	export default {
+		name: 'PerInfo',
+		data() {
+			return {
+				state: this.$store.state,
+				leftDetail: {},
+				outtypeList: []
+			};
+		},
+		watch: {
+			'state.outItemLeftDetails' : {
+				deep: true,
+				handler(val) {
+					this.leftDetail = val
+				}
+			}
+		},
+		computed: {
+			ioApplyComplete() {
+				let state = this.$route.params.id.split("-")[1]
+				if (Object.isEmpty(state)) {
+					state = this.$store.getters.outItemItem.status
+				}
+				if (state == 10) {
+					return true
+				}
+				if (state == 11) {
+					return true
+				}
+				if (state == 12) {
+					return true
+				}
+				if (state == 13) {
+					return true
+				}
+				return false
+			}
+		},
+		mounted: function() {
+			this.$nextTick(()=>{
+				this.leftDetail = this.$store.getters.outItemLeftDetails
+				this.$store.dispatch("DICTIONARY", "apply_type").then((data)=>{
+					this.outtypeList = data;
+				})
+			})
+		},
+		methods: {
+			sureClick() {},
+			cancelClick() {},
+			formaterTime(time) {
+				return new Date(time).format("yyyy-MM-dd").split('-').join('.');
+			},
+			formaterBill(isBill) {
+				if (isBill == 0) {
+					return "否"
+				}
+				if (isBill == 1) {
+					return "是"
+				}
+			},
+			formaterType(type) {
+				let ret = ''
+				this.outtypeList.forEach((item, index)=>{
+					if (item.value == type) {
+						ret = item.name
+					}
+				})
+				return ret
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.out-countprice {
+		height: 126px;
+		text-align: center;
+	}
+	
+	.out-countprice .content {
+		font-size: 32px;
+		color: #000000;
+		letter-spacing: 0;
+	}
+	
+	.out-countprice .dsc {
+		font-size: 12px;
+		color: #CACACA;
+		letter-spacing: 0;
+	}
+	
+	.bg-purple {
+		background: #F8F9FB;
+	}
+	
+	.grid-content {
+		border-radius: 4px;
+		height: 92px;
+	}
+	
+	.card-text section {
+		display: inline-block;
+		vertical-align: middle;
+	}
+	
+	.card-text .area {
+		text-align: center;
+	}
+	
+	.card-text .card-text__title {
+		font-size: 20px;
+		color: #333333;
+	}
+	
+	.card-text .card-text__tips {
+		font-size: 12px;
+		color: #CACACA;
+		letter-spacing: 0;
+		text-align: center;
+	}
+	
+	.perinfo {
+		padding: 0px 20px 18px 20px;
+	}
+	
+	.perinfo .line {
+		margin-left: -20px;
+		margin-right: -20px;
+		opacity: 0.26;
+		border-bottom: 1px solid #D5D5D5;
+	}
+	
+	.perinfo>.line:nth-child(1) {
+		margin-bottom: 20px;
+	}
+	
+	.perinfo table {
+		width: 100%;
+		margin-top: 14px;
+	}
+	
+	.perinfo table td {
+		padding-bottom: 9px;
+		font-size: 12px;
+		color: #999999;
+	}
+	
+	.perinfo table tr:nth-last-of-type(1) td {
+		padding-bottom: 0;
+	}
+	
+	.perinfo table .tip {
+		width: 74px;
+	}
+</style>

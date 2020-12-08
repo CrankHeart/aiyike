@@ -1,0 +1,74 @@
+<template>
+	<div class="layout">
+		<el-dialog title="注销账户" :visible.sync="dialogVisible" class="dialog442 resetDialog">
+			<p class="content"><i class="icon-quit"></i>确认注销？</p>
+			<span slot="footer" class="dialog-footer">
+		    	<el-button class="submitbtn" type="primary" @click="sure">确认</el-button>
+			    <el-button class="cancelbtn" @click="cancel">取消</el-button>
+	    	</span>
+		</el-dialog>
+	</div>
+</template>
+
+<script>
+	export default {
+		name: 'QuitUserDialog',
+		props: {
+			visible: {
+				type: Boolean,
+				default: false
+			},
+			success: {
+				type: Function
+			}
+		},
+		watch: {
+			visible(val) {
+				this.dialogVisible = val
+			},
+			dialogVisible(val) {
+				this.$emit('update:visible', val)
+			}
+		},
+		data() {
+			return {
+				dialogVisible: false
+			}
+		},
+		components: {
+		},
+		mounted: function() {
+		},
+		methods: {
+			sure() {
+				if (Object.isNotEmpty(this.success) && Function.isFunction(this.success)) {
+					this.success()
+				}
+      			sessionStorage.removeItem("is_first");
+			},
+			cancel() {
+				this.dialogVisible = false
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.content {
+		text-align: center;
+		font-size: 12px;
+		color: #000000;
+		padding-top: 50px;
+		padding-bottom: 50px;
+	}
+	.icon-quit {
+		background:url(../../assets/img/quit-icon.png) no-repeat;
+		display: inline-block;
+		width: 16px;
+		height: 16px;
+		background-size: 100% 100%;
+		margin-right: 6px;
+		position: relative;
+		top: 3px;
+	}
+</style>

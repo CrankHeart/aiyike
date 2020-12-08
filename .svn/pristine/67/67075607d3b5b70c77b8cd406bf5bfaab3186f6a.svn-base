@@ -1,0 +1,121 @@
+<template>
+	<div class="layout">
+		<el-row :gutter="24">
+				<UnFinished></UnFinished>
+		</el-row>
+	</div>
+</template>
+
+<script>
+let UnFinished = () =>
+  import("@/components/project-item/DivisionManager_UnFinished.vue");
+
+export default {
+  name: "UnFinishedProjectList",
+  data() {
+    return {};
+  },
+  components: {
+    UnFinished
+  },
+  methods: {}
+};
+</script>
+
+<style scoped>
+.layout {
+  position: relative;
+}
+.createProjectBtn {
+  background: #295dcf;
+  width: 56px;
+  height: 56px;
+  border-radius: 100%;
+  color: #ffffff;
+  text-align: center;
+  display: inline-block;
+  position: fixed;
+  bottom: 6px;
+  right: 370px;
+  cursor: pointer;
+  line-height: 56px;
+}
+.col-mb {
+  margin-bottom: 24px;
+}
+
+.uncompletTem {
+  padding: 43px 37px 43px 37px;
+  background: #ffffff;
+}
+
+.uncompletTem li {
+  float: left;
+}
+
+.temLeft {
+  width: 89px;
+  height: 76px;
+  padding-top: 24px;
+  text-align: center;
+  box-sizing: border-box;
+  font-size: 13px;
+  background: url(../../assets/img/folder.png) no-repeat;
+  background-size: 100% 100%;
+}
+
+.temRight {
+  margin-left: 25px;
+  color: #333333;
+  min-width: 170px;
+}
+
+.percent {
+  color: #ffffff;
+}
+
+.percent .percentNum {
+  font-size: 22px;
+}
+
+.percent .percentUnit {
+  font-size: 18px;
+}
+
+.percentTxt {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.projectTitle {
+  font-size: 16px;
+  color: #000000;
+  margin-bottom: 22px;
+}
+
+.projectItem {
+  font-size: 12px;
+  transform: scale(0.8333);
+  transform-origin: left;
+  color: #999999;
+  margin-bottom: 5px;
+}
+
+.textLeft {
+  text-align: left;
+}
+
+.font16 {
+  font-size: 14px;
+  color: #333333;
+}
+
+.tian {
+  font-size: 14px;
+  font-weight: normal;
+  margin-left: 3px;
+}
+
+.margR {
+  margin-left: 50px;
+}
+</style>

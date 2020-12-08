@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>修改密码</title>
+</head>
+<body>
+<input placeholder="新密码" value="" type="password" class="password"/>
+<input placeholder="确认密码" value="" type="password" class="surePassword"/>
+<button value="" id="submit">确认</button>
+</body>
+<script type="text/javascript" src="../js/base/jquery.min.js"></script>
+<script type="text/javascript">
+    var param = function(name,split){
+       var query = window.location.search.substring(1);
+       var keySet =  query.split(split);
+        if(keySet){
+            for(var i in keySet){
+                var arr = keySet[i].split("&");
+                for(var j in arr){
+                    var param = arr[j].split("=");
+                    if(param[0]==name){
+                        return param[1];
+                    }
+                }
+
+            }
+        }
+    }
+    $("#submit").click(function(){
+        var email = param("email","?");
+        var uuid = param("uuid","&");
+       var password = $(".password").val();
+        if(!password||password==''){
+            alert("密码不能为空");
+            return false;
+        }
+        $.ajax({
+            url:"http://192.168.20.72/api/uContact/modifyPwdByEmail",
+            type:"post",
+            data:{email:email,uuid:uuid,password:password},
+            dataType:"json",
+            success:function(data){
+                if(data.success){
+                    alert("密码修改成功！");
+                }
+            }
+        })
+    })
+
+</script>
+</html>

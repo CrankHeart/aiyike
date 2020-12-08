@@ -1,0 +1,192 @@
+<!--外围管理-外围项目管理详情-左侧模块-->
+<template>
+	<div class="layout">
+		<div class="layout-in">
+			<progress-charts v-if="ioApplyComplete && HasPermission('progressMk')"></progress-charts>
+			<per-info></per-info>
+			<range-dsc></range-dsc>
+			<project-ev v-if="evbtnComputed && HasPermission('outItemEvBtn')"></project-ev>
+			<project-audit v-if="auditbtnComputed && HasPermission('outItemAuditBtn')"></project-audit>
+			<OutItemBtnPop v-if="btnPopVisible && isStop" :itemId="$route.params.id" @pjStop="OnPjStop" @reload="reload"></OutItemBtnPop>
+			<ProjectPayPlan v-if="paybtnComputed && HasPermission('outItemPayPlanBtn')"></ProjectPayPlan>
+		</div>
+	</div>
+</template>
+
+<script>
+	let ProgressCharts = () =>
+		import('./Progress.vue')
+	let RangeDsc = () =>
+		import('./RangeDsc.vue')
+	let PerInfo = () =>
+		import('./PerInfo.vue')
+	let ProjectEv = () =>
+		import('./ProjectEv.vue')
+	let ProjectAudit = () =>
+		import('./ProjectAudit.vue')
+	let OutItemBtnPop = () =>
+		import('./OutItemBtnPop.vue')
+	let ProjectPayPlan = () =>
+		import('./ProjectPayPlan.vue')
+	export default {
+		name: 'OutItemMgtDetails_Left',
+		data() {
+			return {
+				state:this.$route.params.id.split("-")[1],
+				isStop:true
+			}
+		},
+		components: {
+			ProgressCharts,
+			RangeDsc,
+			PerInfo,
+			ProjectEv,
+			ProjectAudit,
+			OutItemBtnPop,
+			ProjectPayPlan,
+		},
+		computed: {
+			btnPopVisible() {
+				if (this.state !== 12 || this.state !== 13) {
+					return true
+				}else{
+					return false
+				}
+			},
+			evbtnComputed() {
+				if (this.state == 3) {
+					return true
+				}
+				if (this.state == 4) {
+					return true
+				}
+				if (this.state == 5) {
+					return true
+				}
+				return false
+			},
+			auditbtnComputed() {
+				if (this.state == 1) {
+					return true
+				}
+				if (this.state == 2) {
+					return true
+				}
+				if (this.state == 6) {
+					return true
+				}
+				if (this.state == 7) {
+					return true
+				}
+				if (this.state == 8) {
+					return true
+				}
+				return false
+			},
+			paybtnComputed() {
+				if (this.state == 9) {
+					return true
+				}
+				return false
+			},
+			ioApplyComplete() {
+				if (Object.isEmpty(this.state)) {
+					this.state = this.$store.getters.outItemItem.status
+				}
+				if (this.sameBusId()) {
+					if (this.state == 4  || this.state ==6  || this.state == 7 || this.state ==8 || this.state ==9) {
+						return true
+					}
+				}
+				if (this.state == 1 || this.state == 2 || this.state == 3 || this.state == 5) {
+					return true
+				}
+				
+				if (this.state == 10) {
+					return true
+				}
+				if (this.state == 11) {
+					return true
+				}
+				if (this.state == 12) {
+					return true
+				}
+				if (this.state == 13) {
+					return true
+				}
+				return false
+			}
+		},
+		mounted: function() {
+			this.$nextTick(()=>{
+			})
+		},
+		methods: {
+			OnPjStop(status){
+				this.isStop = false;
+			},
+			sameBusId() {
+				let cbusId = this.$store.getters.loginInfo.bus.id
+				let lbusId = this.$store.getters.outItemItem.busId
+				if (lbusId == cbusId) {
+					return true
+				}
+				return false
+			},
+			reload() {
+				this.$emit("reload")
+			},
+			
+		}
+	}
+</script>
+
+<style scoped>
+	.viewAllotment {
+		background: #fff;
+		padding-bottom: 14px;
+	}
+	
+	.layout .line {
+		margin-bottom: 14px;
+		position: relative;
+		margin-left: -20px;
+		margin-right: -20px;
+		height: 1px;
+		opacity: 0.26;
+		background: #D5D5D5;
+		border: none;
+	}
+	
+	.layout {
+		width: 350px;
+		position: relative;
+	}
+	
+	.layout .title {
+		font-size: 14px;
+		color: #000000;
+		font-family: "PingFangSC-Medium", "Microsoft YaHei", Arial, Helvetica, sans-serif, "SimSun";
+		padding-left: 20px;
+	}
+	
+	.mlr {
+		margin-left: 5px;
+		margin-right: 5px;
+		width: auto;
+	}
+	
+	.mt14 {
+		margin-top: 14px;
+	}
+	
+	.fade-enter-active,
+	.fade-leave-active {
+		transition: opacity .5s
+	}
+	
+	.fade-enter,
+	.fade-leave-to {
+		opacity: 0
+	}
+</style>

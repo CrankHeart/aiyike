@@ -1,0 +1,161 @@
+<template>
+	<div class="wrap container">
+		<tabs :class="tabClass" v-model="activeName" @tab-click="handleClick">
+			<tab-pane label="外围项目管理" name="outItemMgt">
+				<component v-show="pageShow" :is="outItemMgt" @replace="replaceItemComponent" :index.sync="stepsIndex" :data="itemData">
+				</component>
+			</tab-pane>
+			<tab-pane label="外围团队信息管理" name="outTeam">
+				<component :is="outTeam" ref="outTeam"></component>
+			</tab-pane>
+			<template slot="right">
+				<el-button type="primary" @click="applyOutClick" class="submitbtn" v-if="applyOutItemBtnVisible && activeName == 'outItemMgt' && HasPermission('applyOutItem')">申请外围</el-button>
+				<el-button type="primary" class="statusbtn" v-if="activeName == 'outTeam' && HasPermission('registerOutItem')" @click="regOutTeam">注册外围团队</el-button>
+				<el-button type="primary" class="statusbtn" v-if="activeName == 'outTeam' && HasPermission('labelsOutItem')" @click="spBusManage">业务范围管理</el-button>
+			</template>
+		</tabs>
+		<outApplyAudit class="out-apply-audit-module" v-if="auditView"></outApplyAudit>
+	</div>
+</template>
+
+<script>
+	function syncComponent(path) {
+		return() =>
+			import('@/' + path + '.vue')
+	}
+	let outItemMgt = syncComponent('modules/Out/outItemMgt')
+	let outTeam = syncComponent('modules/Out/outTeam')
+	let outApplyAudit = syncComponent('modules/Out/outApplyAudit')
+	let Tabs = syncComponent('components/tabs/Tabs')
+	let TabPane = syncComponent('components/tabs/TabPane')
+	let OutItemMgtSteps = syncComponent('modules/Out/OutItemMgtSteps/OutItemMgtSteps')
+	export default {
+		name: 'OutMgt',
+		data() {
+			return {
+				state: this.$store.state,
+				tabClass: 'tabss',
+				auditView: false,
+				activeName: '',
+				outItemMgt: null,
+				outTeam: null,
+				stepsIndex: -1,
+				itemData: {},
+				applyOutItemBtnVisible: true,
+				pageShow: false
+			}
+		},
+		watch: {
+			'state.outItemMgtSteps.state' (val) {
+				this.editHandler(val)
+			}
+		},
+		components: {
+			outApplyAudit,
+			Tabs,
+			TabPane
+		},
+		created() {
+			
+		},
+		mounted: function() {
+		},
+		methods: {
+			editHandler(val) {
+				if("edit" == val) {
+					this.$http.post(`/api/ioApply/detail/${this.$store.getters.outItemAudit.id}`, null, {
+						emulateJSON: true
+					})
+					.then((res) => {
+						var data = res.data;
+						if(data.success) {
+							data.result.editState = true
+							this.replaceItemComponent('OutItemMgtSteps', {
+								stepsIndex: 0,
+								extra: data.result
+							})
+						}
+					}).catch((err) => {})
+				}
+				if ('jump' == val) {
+					this.replaceItemComponent('OutItemMgtSteps', {
+						stepsIndex: 0,
+						extra: this.$store.getters.outItemMgtSteps_JumpData
+					})
+				}
+				this.$store.commit('outItemMgtSteps_State', "")
+			},
+			regOutTeam() {
+				this.$router.push({
+					path: `/reg`
+				});
+			},
+			spBusManage() {
+				this.$refs['outTeam'] && this.$refs['outTeam'].spBusDialog && this.$refs['outTeam'].spBusDialog()
+			},
+			applyOutClick() {
+				this.replaceItemComponent("OutItemMgtSteps", {
+					stepsIndex: 0,
+					extra: {}
+				})
+			},
+			showProjectAudit() {
+				this.tabClass = 'tabss'
+				this.auditView = true
+			},
+			hideProjectAudit() {
+				this.tabClass = ''
+				this.auditView = false
+			},
+			replaceItemComponent(name, data) {
+				let cp = {
+					OutItemMgtSteps,
+					outItemMgt
+				}
+				let action = {
+					OutItemMgtSteps() {
+						this.hideProjectAudit()
+						this.stepsIndex = data.stepsIndex
+						this.itemData = data.extra
+						this.applyOutItemBtnVisible = false
+					},
+					outItemMgt() {
+						this.showProjectAudit()
+						this.applyOutItemBtnVisible = true
+					}
+				}
+				this.outItemMgt = cp[name]
+				this.$nextTick(() => {
+					action[name] && action[name].call(this)
+				})
+			},
+			handleClick(tab, event) {
+				this.showProjectAudit()
+				this.applyOutItemBtnVisible = true
+				if(tab.name == "outItemMgt") {
+					if (this.$store.getters.outItemMgtSteps_State) {
+						this.editHandler(this.$store.getters.outItemMgtSteps_State)
+					} else {
+						this.outItemMgt = outItemMgt;
+					}
+				} else if(tab.name == "outTeam") {
+					this.outTeam = outTeam;
+					this.$refs.outTeam && this.$refs.outTeam.reload && this.$refs.outTeam.reload()
+				}
+				this.pageShow = true
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.tabss {
+		margin-right: 334px;
+	}
+	
+	.out-apply-audit-module {
+		position: absolute;
+		top: 0;
+		right: 0;
+	}
+</style>

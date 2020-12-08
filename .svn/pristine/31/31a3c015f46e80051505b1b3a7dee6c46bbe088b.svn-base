@@ -1,0 +1,205 @@
+<!--项目管理-未完结项目详情-左侧模块-->
+<template>
+	<div>
+		<div class="project_operation_btn" @click.stop="menuClick" v-if="popshow">
+			<i class="el-icon-icon-gengduo1"></i>
+			<transition name="fade">
+				<ul class="menu" v-show="show" ref="menu">
+					<li ref="items" @click.stop="outItemStateDialogClick('hangUpByOut')" v-if="hanupBtnVsibel && HasPermission('hangUpByOut')">项目挂起</li>
+					<li ref="items" @click.stop="outItemStateDialogClick('stopByOut')" v-if="hanupBtnVsibel && HasPermission('stopByOut')">项目中止</li>
+					<li ref="items" @click.stop="outItemStateDialogClick('finishByOut')" v-if="hanupBtnVsibel && HasPermission('finishByOut')">项目结项</li>
+					<li ref="items" @click.stop="peripheralTeamDialogClick" v-if="HasPermission('peripheralTeam')">评价外围团队</li>
+					<li ref="items" @click.stop="updateItemProgressClick" v-if="HasPermission('updateOutProgress')">更新项目进度</li>
+					<li ref="items" @click.stop="itemReportClick" v-if="HasPermission('phasedReporting')">阶段性汇报</li>
+					<li ref="items" @click.stop="assessAiyiChargePersonDialogClick" v-if="HasPermission('assessAiyiCharge')">评价艾艺负责人</li>
+					<li ref="items" @click.stop="updateItemChargeProgressClick" v-if="HasPermission('updateItemChargeProgress')">外围更新进度</li>
+				</ul>
+			</transition>
+		</div>
+		<component :is="outItemStateDialogView" :titleType="outItemStateType" :visible.sync="outItemStateDialogFlag"></component>
+		<component :is="peripheralTeamDialogView" :visible.sync="peripheralTeamDialogFlag"></component>
+		<component :is="updateItemProgressView" :visible.sync="updateItemProgressFlag" @sure="reload"></component>
+		<component :is="assessAiyiChargePersonDialogView" :visible.sync="assessAiyiChargePersonDialogFlag"></component>
+		<component :is="updateItemChargeProgressView" :visible.sync="updateItemChargeProgressFlag"></component>
+	</div>
+</template>
+
+<script>
+	//项目挂起 项目中止 项目结项
+	let OutItemStateDialog = () =>
+		import('./OutItemStateDialog.vue')
+	//评价外围团队
+	let PeripheralTeamDialog = () =>
+		import('./PeripheralTeamDialog.vue')
+	//更新项目进度
+	let UpdateItemProgress = () =>
+		import('./UpdateItemProgress.vue')	
+	//评价艾艺负责人
+	let AssessAiyiChargePersonDialog = () =>
+		import('./AssessAiyiChargePersonDialog.vue')	
+	let UpdateItemChargeProgress = () =>
+		import('./UpdateItemChargeProgress.vue')	
+	export default {
+		name: 'OutItemBtnPop',
+		data() {
+			return {
+				state:'',
+				popshow: true,
+				show: false,
+				outItemStateType: '',
+				outItemStateDialogFlag: false,
+				outItemStateDialogView: null,
+				peripheralTeamDialogFlag: false,
+				peripheralTeamDialogView: null,
+				updateItemProgressFlag: false,
+				updateItemProgressView: null,
+				assessAiyiChargePersonDialogFlag: false,
+				assessAiyiChargePersonDialogView: null,
+				updateItemChargeProgressFlag: false,
+				updateItemChargeProgressView: null
+			};
+		},
+		components: {},
+		created() {
+			this.$nextTick(()=>{
+				if (!this.$refs.menu.children.length) {
+					this.popshow = false
+				}
+			})
+		},
+		mounted: function() {
+			this.blurEvent()
+		},
+		computed: {
+				hanupBtnVsibel() {
+				let state = this.$store.getters.outItemItem.status
+				if (state == 11 || state == 12 || state == 13) {
+					return false 
+				}else{
+				return true
+				}
+			},
+		},
+		methods: {
+			reload() {
+				this.$emit("reload")
+			},
+			updateItemChargeProgressClick() {
+				this.updateItemChargeProgressView = UpdateItemChargeProgress
+				this.updateItemChargeProgressFlag = true
+				this.show = false
+			},
+			outItemStateDialogClick(type) {
+				this.outItemStateType = type
+				this.outItemStateDialogView = OutItemStateDialog
+				this.outItemStateDialogFlag = true
+				this.show = false
+			},
+			peripheralTeamDialogClick() {
+				this.peripheralTeamDialogView = PeripheralTeamDialog
+				this.peripheralTeamDialogFlag = true
+				this.show = false
+			},
+			updateItemProgressClick() {
+				this.updateItemProgressView = UpdateItemProgress
+				this.updateItemProgressFlag = true
+				this.show = false
+			},
+			assessAiyiChargePersonDialogClick() {
+				this.assessAiyiChargePersonDialogView = AssessAiyiChargePersonDialog
+				this.assessAiyiChargePersonDialogFlag = true
+				this.show = false
+			},
+			itemReportClick() {
+				this.$router.push(`/out/outMgt/reporting/${this.$route.params.id.split("-")[0]}`);
+			},
+			menuClick() {
+				this.show = !this.show
+			},
+			blurEvent() {
+				let _self = this
+				document.addEventListener('click', function() {
+					_self.show = false
+				}, false)
+			},
+			itemClick() {
+				this.show = false
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.nd-wrap {
+		position: relative;
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+		top:-60px;
+		padding-top: 60px;
+		height: 100%;
+	}
+	.project_operation_btn {
+		position: fixed;
+		position: -ms-device-fixed;
+		left: 410px;
+		cursor: pointer;
+		cursor: -ms-pointer;
+		bottom: 24px;
+		background: #295DCF;
+		box-shadow: 0 5px 4px 0 rgba(41, 93, 207, 0.10);
+		width: 50px;
+		height: 50px;
+		border-radius: 100%;
+		color: #fff;
+		text-align: center;
+		line-height: 50px;
+		vertical-align: middle;
+		z-index: 1000;
+	}
+	
+	.project_operation_btn .menu {
+		position: absolute;
+		background: #171718;
+		bottom: 6px;
+		left: 60px;
+		padding-left: 14px;
+		padding-right: 14px;
+	}
+	
+	.fade-enter-active,
+	.fade-leave-active {
+		transition: opacity .25s
+	}
+	
+	.fade-enter,
+	.fade-leave-to {
+		opacity: 0
+	}
+	
+	.project_operation_btn .menu li {
+		font-size: 14px;
+		border-bottom: 1px solid #303031;
+		height: 42px;
+		width: 112px;
+		line-height: 40px;
+		color: #dcdcdc;
+		text-align: left;
+	}
+	
+	.project_operation_btn .menu:before {
+		content: "";
+		position: absolute;
+		bottom: 12px;
+		left: -6px;
+		width: 0;
+		height: 0;
+		border-top: 6px solid transparent;
+		border-bottom: 6px solid transparent;
+		border-right: 6px solid #171718;
+	}
+	
+	.project_operation_btn .menu li:nth-last-of-type(1) {
+		border: none;
+	}
+</style>

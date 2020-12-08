@@ -1,0 +1,21 @@
+.el-page-add{
+	float: right;
+	margin-right: 28px;
+	margin-bottom: 10px;
+}
+
+
+.ui-tabel {
+		margin-top: 28px;
+}
+
+.ui-cpagina {
+	margin-top: 10px;
+}
+
+.ui-demo-form-inline {
+	text-align: right;
+}
+.ui-input{
+	width: 193px;
+}

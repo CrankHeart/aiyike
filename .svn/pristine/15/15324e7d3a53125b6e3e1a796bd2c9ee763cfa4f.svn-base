@@ -1,0 +1,403 @@
+<!--search-->
+<template>
+	<div class="WeeklyManagement_Search">
+		<section class="layout-list">
+			<el-form :model="formInline" class="soso clearfix margin-left8" label-width="68px">
+				<el-form-item class="label inlineblock" label="提交日期：">
+					<el-date-picker class="input_text" type="date" placeholder="开始日期" v-model="formInline.starttime" style="width: 109px;"></el-date-picker>
+					<span class="line">-</span>
+					<el-date-picker class="input_text" type="date" placeholder="结束日期" v-model="formInline.endtime" style="width: 109px;"></el-date-picker>
+				</el-form-item>
+				<el-form-item class="label inlineblock marginLeft18 form190" label="周报类型：">
+					<el-select v-model="formInline.weeklyTypeValue" class="label select-wrap" placeholder="选择周报类型" v-sicon1  @change="showPName">
+						<el-option v-for="item in weeklyType" :key="item.value" :label="item.label" :value="item.value">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<!--<div class="clearfix">-->
+					<el-form-item class="label inlineblock  form190" label="项目名称：" v-if="showProjectName">
+						<el-select v-model="formInline.entryNameValue" class="select-wrap proName" filterable multiple placeholder="选择项目名称" v-sicon1>
+							<el-option v-for="item in entryName" :key="item.id" :label="item.name" :value="item.id">
+							</el-option>
+						</el-select>
+					</el-form-item>
+					<el-form-item class="label inlineblock  form190" label="所属部门：">
+						<GroupSelect class="my-input" v-model="formInline.subordinateSectorValue" :treeData="treeData" placeholder="所属部门"></GroupSelect>
+						<!--<el-select v-model="formInline.subordinateSectorValue" class="select-wrap" filterable placeholder="选择部门名称" @click="setDepartment" v-sicon1>-->
+							<!--<el-option v-for="item in subordinateSector" :key="item.value" :label="item.label" :value="item.value">-->
+							<!--</el-option>-->
+						<!--</el-select>-->
+						<!--<el-input class="select-wrap" placeholder="选择部门名称" v-model="formInline.subordinateSectorValue" @focus="setDepartment()"></el-input>-->
+					</el-form-item>
+					<el-form-item class="label inlineblock" label="姓名：" label-width="46px">
+						<el-select v-model="formInline.personnelValue" filterable placeholder="请选择" class="select-wrap form190" clearable filterable remote :remote-method="remoteNameMethod" :loading="loading" v-sicon1>
+							<el-option v-for="item in personnel" :key="item.id" :label="item.chName" :value="item.id">
+							</el-option>
+						</el-select>
+					</el-form-item>
+				<!--</div>-->
+				<el-button type="primary" @click="onSoso" class="sosobtn">搜索</el-button>
+			</el-form>
+			<div class="log-list clearfix" ref="panelWrap">
+				<template v-for="(item,key) in weeklyList">
+					<ProjectWeekly v-if="item.category == 1" :key="key" :item="item" class="fl currWeeklyList ProjectWeekly" ref="currWeeklyList" @hover="showOperationOrNot" :ishoverOrNot="false" @click.native="ProjectWeeklyDeatils(key,item)">
+					</ProjectWeekly>
+					<BusinessWeekly v-if="item.category == 2" :key="key" :item="item" class="fl currWeeklyList BusinessWeekly" ref="currWeeklyList" @hover="showOperationOrNot" :ishoverOrNot="false" @click.native="departmentWeeklyDetails(key,item)">
+					</BusinessWeekly>
+				</template>
+			</div>
+		</section>
+		<!--<department-dialog-tree :visible.sync="departmentDialogVisible"  @ok = "getOk"></department-dialog-tree>-->
+	</div>
+</template>
+
+<script>
+	let ProjectWeekly = function(resolve) {
+		require(['@/components/weekly-component/ProjectWeekly'], resolve);
+	}
+	let BusinessWeekly = function(resolve) {
+		require(['@/components/weekly-component/BusinessWeekly'], resolve);
+	}
+    let GroupSelect = () =>
+        import('@/components/select/GroupSelect.vue')
+	export default {
+		name: 'WeeklyManagement_Search',
+		data() {
+			return {
+                dataList: JSON.parse(Cache.local(Config.Login)),
+                sendData: null,
+				data:null,
+                treeData:[],
+				hoverStatus: 0,
+                loading: false,
+                getOkData:{},
+                departmentDialogVisible:false,
+                state:this.$store,
+				formInline: {
+					starttime: '',
+					endtime: '',
+                    personnelValue: '',
+                    entryNameValue: '',
+                    weeklyTypeValue: '',
+                    subordinateSectorValue: '',
+					nameList: [],
+					nameStates: [],
+				},
+				//周报类型
+				weeklyType: [{
+                    value: '0',
+                    label: '部门周报'
+                }, {
+                    value: '1',
+                    label: '项目周报'
+                }],
+				//项目名称
+				entryName: [],
+				//所属部门
+				subordinateSector: [],
+				//姓名
+				personnel: [],
+				//搜索周报
+				weeklyList: [],
+                num:'',
+                ratio: '',
+                parent: this.$parent.$parent.$parent,
+                calculaFlag: true,
+                showProjectName:false
+			}
+		},
+		watch: {
+            'parent.paneWidth'(val) {
+				this.throttle(()=>{
+					this.forGetWeeklyDom()
+				},500)()
+            }
+		},
+		components: {
+			ProjectWeekly,
+			BusinessWeekly,
+            GroupSelect
+		},
+		mounted: function() {
+		    
+            this.myDate = new Date()
+            this.sendData = {
+                loginId: this.dataList.uc.id,
+                ucId: this.dataList.uc.id
+            }
+            this.data = JSON.parse(JSON.stringify(this.sendData))
+            delete this.data.ucId
+            this.getSearchList()
+            this.getProjectName()
+			this.getDepartmentData()
+		},
+		methods: {
+            getDepartmentData(){
+                let data = {
+                    busId:this.dataList.bus.id,
+					parentId:this.dataList.uc.departId
+				}
+                this.$http.post('/api/depart/child', data, {
+                    emulateJSON: true
+                }).then((res) => {
+                    this.treeData = res.data.result||[]
+                }).catch((err) => {
+                    
+                })
+			},
+            setDepartment(){
+                this.departmentDialogVisible = true
+			},
+            getOk(val){
+                this.getOkData.label = val.label
+                this.getOkData.id = val.id
+                this.formInline.subordinateSectorValue = this.getOkData.label
+                this.sendData.departId = this.getOkData.id
+            },
+            showPName(val){
+                if(val == 1){
+                    this.showProjectName = true
+                    return
+                }
+                this.showProjectName = false
+				this.formInline.entryNameValue = ''
+                return false
+            },
+            remoteNameMethod(query) {
+                if(query !== '') {
+                    this.loading = true
+                    this.$http.post('/api/uContact/queryUcBlur', {
+                        enName: query
+                    }, {
+                        emulateJSON: true
+                    }).then((res) => {
+                        this.loading = false
+                        this.formInline.personnelValue = query
+                        this.personnel = res.data.result
+                    }).catch((err) => {
+                        
+                    })
+                } else {
+                    this.personnel = []
+                }
+            },
+            //查询
+            getSearchList() {
+                this.data.pageSize = 200
+				this.data.status = 3
+                //获取查询周报列表
+                this.$http.post('/api/week/query', this.data, {
+                    emulateJSON: true
+                }).then((res) => {
+                        var data = res.data
+                        if(data.success) {
+                            this.weeklyList = data.result.content
+                            this.$nextTick(()=>{
+                            	this.forGetWeeklyDom()
+                            })
+                        }
+                    }).catch((err) => {
+
+                })
+            },
+            forGetWeeklyDom(){
+                let _self = this
+                let timer = requestAnimationFrame(function fn(){
+                    if (_self.$refs.currWeeklyList && _self.$refs.currWeeklyList.length == _self.weeklyList.length) {
+                        cancelAnimationFrame(timer)
+                        if (_self.calculaFlag) {
+                            _self.calculaFlag = false
+                    	    _self.calculationMargin(false,30)
+                        }
+                    }else{
+                        timer = requestAnimationFrame(fn)
+                    }
+                })
+            },
+            getProjectName() {
+                //获取项目名称
+                this.$http.post('/api/item/itemNameList', this.sendData, {
+                    emulateJSON: true
+                })
+                    .then((res) => {
+                        var data = res.data;
+                        if(data.success) {
+                            this.entryName = data.result
+                        }
+                    }).catch((err) => {
+
+                })
+            },
+            onSoso() {
+                this.data = JSON.parse(JSON.stringify(this.sendData));
+                delete this.data.ucId
+                // delete this.data.departId
+                this.dealSosoData()
+                this.getSearchList()
+			},
+            dealSosoData() {
+                //处理搜索数据
+                this.data.startTime = !!this.formInline.starttime ? (new Date(this.formInline.starttime)).format("yyyy-MM-dd hh:mm:ss") : ''
+                this.data.endTime = !!this.formInline.endtime ? (new Date(this.formInline.endtime)).fullCurTime().format("yyyy-MM-dd hh:mm:ss") : ''
+                this.data.itemArr = !!(this.formInline.entryNameValue) ? this.formInline.entryNameValue : ''
+                this.data.ucName = !!(this.formInline.personnelValue) ? this.formInline.personnelValue : ''
+                this.data.type = !!(this.formInline.weeklyTypeValue) ? this.formInline.weeklyTypeValue : ''
+                this.data.departId = !!(this.formInline.subordinateSectorValue) ? this.formInline.subordinateSectorValue.id:''
+            },
+			showOperationOrNot(status) {
+				this.hoverStatus = status;
+			},
+            ProjectWeeklyDeatils(index,data) {
+                this.state.commit('lookUpWeeklyActiveKey',index)
+                this.state.commit('searchWeeklyList',this.weeklyList)
+                this.$router.push({path:`/weeklymanagement/weeklys`, query: {id:data.id,jumpstatus: "2"}})
+            },
+            departmentWeeklyDetails(index,data) {
+                this.state.commit('lookUpWeeklyActiveKey',index)
+                this.state.commit('searchWeeklyList',this.weeklyList)
+                this.$router.push({path:`/weeklymanagement/weeklys`, query: {id:data.id,jumpstatus: "2"}})
+            },
+            resetMargins(mval,num){
+                var lis = document.getElementsByClassName("WeeklyManagement_Search")[0].querySelectorAll(".currWeeklyList")
+                for(let i=0;i<lis.length;i++){
+                    if(((i+1)%(num))==0){
+                        lis[i].style.marginRight = 0+'px'
+                    }else{
+                        lis[i].style.marginRight = mval + 'px'
+                    }
+                }
+            },
+            calculationMargin(is,minm){
+                if (is){
+                    this.num--
+                    this.ratio++
+                    if (this.num <= 0 || this.ratio <= 0) {
+                        this.calculaFlag = true
+                        return
+                    }
+                } else {
+                    let aw = this.$refs.panelWrap.clientWidth			//总宽度
+                    this.num = parseInt(aw/180)				//可放的周报数目
+                    this.ratio = aw/180 - parseInt(aw/180)			//每个marginright的比例
+                }
+                this.mWeekly = (this.ratio*180)/(this.num - 1)
+                if(this.mWeekly >= minm){
+                    this.resetMargins(this.mWeekly,this.num)
+                    this.calculaFlag = true
+                }else{
+                    this.calculationMargin(true,30)					//is代表是否支出一个周报的宽度做margin
+                }
+            },
+            throttle(fn,interval){
+                var _self = this,	// 保存需要被延迟执行的函数引用
+                    timer,			// 定时器
+                    firstTime = true;	// 是否是第一次调用
+                return function(){
+                    var args = arguments,
+                        _me =  this;
+                    if(firstTime){		//如果是第一次调用，不需延迟执行
+                        fn.apply(_me,args);
+                        return firstTime = false;
+                    }
+                    if(timer){			//如果定时器还在，说明前一次的延迟执行还没有完成
+                        return false;
+                    }
+                    timer = setTimeout(function(){		// 延迟一段时间执行
+                        clearTimeout(timer);
+                        timer = null;
+                        fn.apply(_me,args);
+                    },interval||500)
+                }
+            }
+		}
+	}
+</script>
+
+<style scoped>
+	.el-form-item {
+		margin-right: 0;
+		margin-bottom: 2px;
+	}
+	.inlineblock {
+		display: inline-block;
+		margin-right: 10px;
+	}
+	
+	.soso .input_text {
+		width: 110px;
+		font-size: 12px;
+		color: #999999;
+	}
+	
+	.line {
+		width: 20px;
+	}
+	
+	.label {
+		font-size: 12px !important;
+		color: #666666 !important;
+	}
+	
+	.sosobtn {
+		font-size: 14px;
+		color: #FFFFFF;
+		background: #295DCF;
+		border-radius: 2px;
+		width: 90px;
+		height: 30px;
+		line-height: 0px;
+		position: absolute;
+		right: 0px;
+		top: 4px;
+	}
+	
+	.soso {
+		position: relative;
+		padding-right: 100px;
+	}
+	
+	.line {
+		text-align: center;
+	}
+	
+	.wrap {
+		background: #fff;
+		height: auto;
+		padding: 20px;
+	}
+	
+	.log-list {
+		background-color: #fff;
+		/*padding: 0 20px;*/
+	}
+	
+	.currWeeklyList {
+		margin-top: 20px !important;
+		/*margin-right: 52px;*/
+	}
+	.BusinessWeekly{
+		margin-bottom: 56px;
+	}
+	.ProjectWeekly{
+		margin-bottom: 100px;
+	}
+	.operation-wrap {
+		position: absolute;
+		bottom: 20px;
+		left: 20px;
+	}
+	
+	.operation-wrap i {
+		font-size: 14px;
+		display: block;
+		border-radius: 32px;
+		text-align: center;
+		margin-right: 10px;
+		color: #fff;
+		background-color: #295DCF;
+		padding: 10px;
+	}
+	.marginLeft18{
+		margin-left: -6px;
+	}
+</style>

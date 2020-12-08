@@ -1,0 +1,540 @@
+<!--项目管理-未完结项目详情-左侧模块-->
+<template>
+	<div>
+		<div class="project_operation_btn" @click.stop="menuClick" v-if="popshow">
+			<i class="el-icon-icon-gengduo1"></i>
+			<transition name="fade">
+				<ul class="menu" v-show="show" ref="menu">
+					<!--<li @click.stop="auditStateClick('ItemFinish')" v-if="btnVisible">审核结项</li>-->
+					<!--<li @click.stop="auditStateClick('ItemStop')" v-if="btnVisible">审核中止</li>-->
+					<!--<li @click.stop="auditStateClick('ItemHangUp')" v-if="btnVisible">审核挂起</li>-->
+					<!--<li @click.stop="progressReviewAuditClick" v-if="btnVisible">进度会审</li>-->
+					<!--<li @click.stop="reviewProjectScheduleClick" v-if="btnVisible">审核项目进度</li>-->
+					<!--<li @click.stop="itemRequireChangeClick" v-if="btnVisible">审核需求变更</li>-->
+					<li ref="items" @click.stop="customerEvClick" v-if="btnVisible && HasPermission('customerEvBtn')">客户评价</li>
+					<li ref="items" @click.stop="requirementChangeClick" v-if="btnVisible && HasPermission('requirementChange') && qutaVisible">需求变更</li>
+					<li ref="items" @click.stop="projectStateClick('ItemHangUp')" v-if="btnVisible && HasPermission('ItemHangUp')">项目挂起</li>
+					<li ref="items" @click.stop="projectStateClick('ItemStop')" v-if="btnVisible && HasPermission('ItemStop')">项目中止</li>
+					<li ref="items" @click.stop="projectStateClick('ItemFinish')" v-if="btnVisible && HasPermission('ItemFinish')">项目结项</li>
+					<li ref="items" @click.stop="cancelStateClick" v-if="reHangUpVisible && HasPermission('cancelHangUp')">解除挂起</li>
+					<li ref="items" @click.stop="quotaAllocationClick" v-if="btnVisible && HasPermission('quotaAllocation') && qutaVisible">项目额度分配</li>
+					<li @click.stop="distributeDepartClick" v-if="btnVisible && HasPermission('distributeDepart')">分配部门</li>
+					<!--<li @click.stop="quotaAllocationAuditClick('ItemDistribute')">项目额度审核</li>-->
+					<!--<li @click.stop="progressViewAuditClick()" v-if="btnVisible">进度会审</li>-->
+					<li ref="items" @click.stop="peripheralTeamClick" v-if="btnVisible && HasPermission('EvperipheralTeam')">评价外围团队</li>
+					<!--<li ref="items" @click.stop="itemClick" v-if="btnVisible && HasPermission('inviteperipheralTeam')">申请外围</li>-->
+					<li ref="items" @click.stop="changePm" v-if="btnVisible && HasPermission('changePm')">更换项目经理</li>
+					<li ref="items" @click.stop="evPjDialogClick" v-if=" HasPermission('EvPm') && isStop && btnVisible">评价项目经理</li>
+					<li ref="items" @click.stop="updateProjectProgressClick" v-if="btnVisible && HasPermission('updateProjectProgress') && qutaVisible">更新项目进度</li>
+
+					<li ref="items" @click.stop="updateOutProgressClick" v-if="HasPermission('updateOutProgress') && progressVisible && btnVisible">更新外围进度</li>
+					<li ref="items" @click.stop="itemClick" v-if="btnVisible && HasPermission('timeReport')">阶段性汇报</li>
+					<!--<li ref="items" @click.stop="itemClick" v-if="btnVisible && HasPermission('timeReport')">阶段性汇报</li>-->
+					<li ref="items" @click.stop="assessAiyiChargePersonClick" v-if="btnVisible && HasPermission('assessAiyiChargePerson')">评价艾艺负责人</li>
+					<li ref="items" @click.stop="applyoutClick" v-if="btnVisible && HasPermission('applyout')">申请外围</li>
+				</ul>
+			</transition>
+		</div>
+		<component :is="changePmShowView" :visible.sync="changePmShowFlag"></component>
+		<component :is="distributeDepartView" :visible.sync="distributeDepartFlag"></component>
+		<component :is="projectStateView" :titleType="projectStateTitle" :visible.sync="projectStateFlag"></component>
+		<component :is="auditStateDialogView" :titleType="auditStateTitle" :visible.sync="auditStateDialogFlag"></component>
+		<component :is="progressReviewAuditView" :visible.sync="progressReviewAuditFlag"></component>
+		<component :is="customerEvaluateDialogView" :visible.sync="customerEvaluateDialogFlag"></component>
+		<component :is="requirementChangeDialogView" :status="status" :visible.sync="requirementChangeDialogFlag"></component>
+		<component :is="projectQuotaAllocationView" :visible.sync="projectQuotaAllocationFlag"></component>
+		<component :is="quotaAllocationAuditView" :visible.sync="quotaAllocationAuditFlag"></component>
+		<component :is="progressViewAuditView" :visible.sync="progressViewAuditFlag"></component>
+		<component :is="peripheralTeamDialogView" :visible.sync="peripheralTeamDialogFlag"></component>
+		<component :is="reviewProjectScheduleView" :visible.sync="reviewProjectScheduleFlag"></component>
+		<component :is="itemRequireChangeView" :visible.sync="itemRequireChangeFlag"></component>
+		<component :is="updateProjectProgressView" :visible.sync="updateProjectProgressFlag"></component>
+		<component :is="UpdateOutProgressView" :visible.sync="UpdateOutProgressFlag"></component>
+		<component :is="assessAiyiChargePersonView" :visible.sync="assessAiyiChargePersonFlag"></component>
+		<component :is="evPjDialogView" :visible.sync="evPjDialogFlag"></component>
+	</div>
+</template>
+
+<script>
+	//更换项目经理
+	let ChangePmDialog = () =>
+		import('./Change_Pm_Dialog.vue')
+	let ProjectStateDialog = () =>
+		import('./Project_State_Dialog.vue')
+	let AuditStateDialog = () =>
+		import('./Audit_State_Dialog.vue')
+	let ProgressReviewAudit = () =>
+		import('./Progress_Review_Audit.vue')
+	let CustomerEvaluateDialog = () =>
+		import('./Customer_Evaluate_Dialog.vue')
+	let EvPjDialog = () =>
+		import('./Ev_Pj_Dialog.vue')
+	let RequirementChangeDialog = () =>
+		import('./Requirement_Change_Dialog.vue')
+	let ProjectQuotaAllocation = () =>
+		import('./Project_Quota_Allocation_Dialog.vue')
+	//分配部门
+	let DistributeDepartDialog = () =>
+		import('./Distribute_Depart_Dialog.vue')
+	let QuotaAllocationAudit = () =>
+		import('./Quota_Allocation_Audit.vue')
+	//进度会审
+	let ProgressViewAudit = () =>
+		import('./Progress_View_Audit.vue')
+	let PeripheralTeamDialog = () =>
+		import('./Peripheral_Team_Dialog.vue')
+	let ReviewProjectSchedule = () =>
+		import('./Review_Project_Schedule.vue')
+	let ItemRequireChange = () =>
+		import('./Item_Require_Change.vue')
+	let UpdateProjectProgress = () =>
+		import('./Update_Project_Progress.vue')
+	let UpdateOutProgress = () =>
+		import('./Update_Out_Progress.vue')
+	let AssessAiyiChargePerson = () =>
+		import('./Assess_AiyiCharge_Person_Dialog.vue')
+
+	export default {
+		name: 'ProjectBtnPop',
+		props: {
+			itemId: {
+				type: String,
+				default: 0
+			}
+		},
+		data() {
+			return {
+				popshow: true,
+				status: -1,
+				id: 0,
+				show: false,
+				projectStateTitle: '',
+				changePmShowFlag: false,
+				changePmShowView: null,
+				distributeDepartFlag: false,
+				distributeDepartView: null,
+				projectStateFlag: false,
+				projectStateView: false,
+				auditStateDialogFlag: false,
+				auditStateDialogView: null,
+				auditStateTitle: null,
+				progressReviewAuditView: null,
+				progressReviewAuditFlag: null,
+				progressReviewAuditType: null,
+				customerEvaluateDialogFlag: false,
+				customerEvaluateDialogView: null,
+				requirementChangeDialogFlag: false,
+				requirementChangeDialogView: null,
+				projectQuotaAllocationFlag: false,
+				projectQuotaAllocationView: null,
+				quotaAllocationAuditFlag: false,
+				quotaAllocationAuditView: null,
+				progressViewAuditFlag: false,
+				progressViewAuditView: null,
+				peripheralTeamDialogFlag: false,
+				peripheralTeamDialogView: null,
+				reviewProjectScheduleFlag: false,
+				reviewProjectScheduleView: null,
+				itemRequireChangeFlag: false,
+				itemRequireChangeView: null,
+				updateProjectProgressFlag: false,
+				updateProjectProgressView: null,
+				UpdateOutProgressFlag: false,
+				UpdateOutProgressView: null,
+				assessAiyiChargePersonFlag: false,
+				assessAiyiChargePersonView: null,
+				evPjDialogFlag: false,
+				evPjDialogView: null,
+				isFlag: true,
+				progressVisible: false
+			};
+		},
+		components: {},
+		created() {
+			this.$nextTick(() => {
+				if(!this.$refs.menu.children.length) {
+					this.popshow = false
+				}
+			})
+		},
+		mounted: function() {
+			this.$http.post('/api/itemComment/isHasEvaluate', {
+				"itemId": this.itemId.replace(/-\d/, ''),
+				"ucId": null
+			}, {
+				emulateJSON: true
+			}).then((res) => {
+				let result = res.data.success
+				if(result) {
+					this.isFlag = !res.data.result
+				} else {}
+			}).catch((err) => {
+
+			});
+			this.updateOutProgressVisible()
+			this.blurEvent()
+			this.obtainCategory(this.itemId)
+		},
+		watch: {
+			itemId(val) {
+				this.obtainCategory(val)
+			}
+		},
+		computed: {
+			btnVisible() {
+				if(
+					/*this.status != 8 && 
+					this.status != 9 && 
+					this.status != 10*/
+
+					this.status == 7
+				) {
+					return true
+				} else {
+					return false
+				}
+			},
+			isStop() {
+				if(
+					this.status == 10
+				) {
+					return true
+				} else {
+					return false
+				}
+			},
+			reHangUpVisible() {
+				if(
+					this.status == 8
+				) {
+					return true
+				} else {
+					return false
+				}
+			},
+			qutaVisible() {
+				if(
+					this.status == 7
+				) {
+					return true
+				} else {
+					return false
+				}
+			}
+		},
+		methods: {
+			updateOutProgressVisible(){
+				this.$http.post('/api/ioRecord/queryItemExitOutBus', {
+					itemId: +this.$route.params.id.split('-')[0]
+				}, {
+					emulateJSON: true
+				}).then((res) => {
+					this.progressVisible = res.data.result
+				}).catch((err) => {
+					console.log(err)
+				});
+			},
+			applyoutClick() {
+				this.$store.commit('outItemMgtSteps_JumpData', {
+					itemId: +this.$route.params.id.split('-')[0],
+				})
+				this.$store.commit('outItemMgtSteps_State', "jump")
+				this.$router.push({
+					path: `/out/outMgt/outItemMgt`
+				})
+			},
+			cancelStateClick() {
+				this.$confirm('是否解除挂起?', '提示', {
+					confirmButtonText: '确定',
+					cancelButtonText: '取消',
+					type: 'warning'
+				}).then(() => {
+					this.relieveHangUp()
+				}).catch(() => {})
+			},
+			relieveHangUp() {
+				this.$http.post('/api/item/relieveHangUp', {
+					id: parseInt(this.id)
+				}, {
+					emulateJSON: true
+				}).then((res) => {
+					let success = res.data.success
+					let result = res.data.result
+					if(success) {
+						this.$message({
+							customClass: 'success',
+							message: '解除成功!'
+						})
+						this.status = 7
+						this.$router.replace(`/businessaffairs/pj/details/${parseInt(this.id)}-7`)
+					} else {
+						this.$message({
+							customClass: 'error',
+							message: '解除失败'
+						})
+					}
+				}).catch((err) => {
+					this.$message({
+						customClass: 'error',
+						message: '解除失败'
+					});
+
+				});
+			},
+			obtainCategory(v) {
+				let ret = `${v}`.split('-')
+				this.id = parseInt(ret[0])
+				this.status = parseInt(ret[1])
+				if(ret.length > 2) {
+					let type = ret[2]
+					this.execActionByType(type)
+				}
+			},
+			execActionByType(type) {
+				let state = +this.status
+				switch(type) {
+					case 'ItemFinish':
+						if(state == 2) {
+							this.projectStateClick()
+						} else {
+							this.auditStateClick()
+						}
+						break
+					case 'ItemHangUp':
+						if(state == 2) {
+							this.projectStateClick()
+						} else {
+							this.auditStateClick()
+						}
+						break
+					case 'ItemStop':
+						if(state == 2) {
+							this.projectStateClick()
+						} else {
+							this.auditStateClick()
+						}
+						break
+					case 'ItemRequire':
+						if(state == 0) {
+							this.itemRequireChangeClick()
+						}
+						if(state == 2) {
+							this.requirementChangeClick()
+						}
+						break
+					case 'ItemDistribute':
+						if(state == 0) {
+							this.quotaAllocationAuditClick()
+						}
+						if(state == 1) {
+							this.distributeDepartClick()
+						}
+						if(state == 2) {
+							this.quotaAllocationClick()
+						}
+						break
+					case 'ItemProgressOrdinary':
+						if(state == 0) {
+							let item = this.$store.getters.doTaskItem
+							//							if (
+							//								item && 
+							//								item.IpRordList.length && 
+							//								item.IpRordList[0].tiger == 0
+							//							) {
+							this.reviewProjectScheduleClick()
+							//							} else {
+							//								this.progressViewAuditClick()
+							//							}
+						}
+						if(state == 2) {
+							this.updateProjectProgressClick()
+						}
+						break
+					case 'ItemProgressReview':
+						if(state == 0 || state == 2) {
+							this.progressReviewAuditClick()
+						}
+						break
+					default:
+						alert('no exec action type!')
+						break
+				}
+			},
+			updateOutProgressClick() {
+				this.UpdateOutProgressView = UpdateOutProgress
+				this.UpdateOutProgressFlag = true
+				this.show = false
+			},
+			evPjDialogClick() {
+				this.evPjDialogView = EvPjDialog
+				this.evPjDialogFlag = true
+				this.show = false
+			},
+			progressReviewAuditClick() {
+				this.progressReviewAuditView = ProgressReviewAudit
+				this.progressReviewAuditFlag = true
+				this.show = false
+			},
+			progressViewAuditClick() {
+				this.progressViewAuditView = ProgressViewAudit
+				this.progressViewAuditFlag = true
+				this.show = false
+			},
+			distributeDepartClick() {
+				this.distributeDepartView = DistributeDepartDialog
+				this.distributeDepartFlag = true
+				this.show = false
+			},
+			assessAiyiChargePersonClick() {
+				this.assessAiyiChargePersonView = AssessAiyiChargePerson
+				this.assessAiyiChargePersonFlag = true
+				this.show = false
+			},
+			updateProjectProgressClick() {
+				this.updateProjectProgressView = UpdateProjectProgress
+				this.updateProjectProgressFlag = true
+				this.show = false
+			},
+			reviewProjectScheduleClick() {
+				this.reviewProjectScheduleView = ReviewProjectSchedule
+				this.reviewProjectScheduleFlag = true
+				this.show = false
+			},
+			itemRequireChangeClick() {
+				this.itemRequireChangeView = ItemRequireChange
+				this.itemRequireChangeFlag = true
+				this.show = false
+			},
+			peripheralTeamClick() {
+				this.peripheralTeamDialogView = PeripheralTeamDialog
+				this.peripheralTeamDialogFlag = true
+				this.show = false
+			},
+			quotaAllocationClick() {
+				this.projectQuotaAllocationView = ProjectQuotaAllocation
+				this.projectQuotaAllocationFlag = true
+				this.show = false
+			},
+			quotaAllocationAuditClick() {
+				this.quotaAllocationAuditView = QuotaAllocationAudit
+				this.quotaAllocationAuditFlag = true
+				this.show = false
+			},
+			requirementChangeClick() {
+				this.requirementChangeDialogView = RequirementChangeDialog
+				this.requirementChangeDialogFlag = true
+				this.show = false
+			},
+			customerEvClick() {
+				this.customerEvaluateDialogView = CustomerEvaluateDialog
+				this.customerEvaluateDialogFlag = true
+				this.show = false
+			},
+			auditStateClick(title) {
+				this.auditStateTitle = title
+				this.auditStateDialogView = AuditStateDialog
+				this.auditStateDialogFlag = true
+				this.show = false
+			},
+			changePm() {
+				this.changePmShowView = ChangePmDialog
+				this.changePmShowFlag = true
+				this.show = false
+			},
+			projectStateClick(title) {
+				this.projectStateTitle = title
+				this.projectStateView = ProjectStateDialog
+				this.projectStateFlag = true
+				this.show = false
+			},
+			menuClick() {
+				this.show = !this.show
+			},
+			blurEvent() {
+				let _self = this
+				document.addEventListener('click', function() {
+					_self.show = false
+				}, false)
+			},
+			itemClick() {
+				this.show = false
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.nd-wrap {
+		position: relative;
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+		top: -60px;
+		padding-top: 60px;
+		height: 100%;
+	}
+	
+	.project_operation_btn {
+		position: fixed;
+		position: -ms-device-fixed;
+		left: 410px;
+		cursor: pointer;
+		cursor: -ms-pointer;
+		bottom: 24px;
+		background: #295DCF;
+		box-shadow: 0 5px 4px 0 rgba(41, 93, 207, 0.10);
+		width: 50px;
+		height: 50px;
+		border-radius: 100%;
+		color: #fff;
+		text-align: center;
+		line-height: 50px;
+		vertical-align: middle;
+		z-index: 1000;
+	}
+	
+	.project_operation_btn .menu {
+		position: absolute;
+		background: #171718;
+		bottom: 6px;
+		left: 60px;
+		padding-left: 14px;
+		padding-right: 14px;
+	}
+	
+	.fade-enter-active,
+	.fade-leave-active {
+		transition: opacity .25s
+	}
+	
+	.fade-enter,
+	.fade-leave-to {
+		opacity: 0
+	}
+	
+	.project_operation_btn .menu li {
+		font-size: 14px;
+		border-bottom: 1px solid #303031;
+		height: 42px;
+		width: 112px;
+		line-height: 40px;
+		color: #dcdcdc;
+		text-align: left;
+	}
+	
+	.project_operation_btn .menu:before {
+		content: "";
+		position: absolute;
+		bottom: 12px;
+		left: -6px;
+		width: 0;
+		height: 0;
+		border-top: 6px solid transparent;
+		border-bottom: 6px solid transparent;
+		border-right: 6px solid #171718;
+	}
+	
+	.project_operation_btn .menu li:nth-last-of-type(1) {
+		border: none;
+	}
+</style>

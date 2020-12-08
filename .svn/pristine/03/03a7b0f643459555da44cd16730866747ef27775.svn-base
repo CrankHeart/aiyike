@@ -1,0 +1,460 @@
+* {
+	word-wrap: break-word;
+	word-break: break-all;
+}
+
+
+/*去掉内外边距-内外边距通常让各个浏览器样式的表现位置不同*/
+
+html,
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+p,
+iframe,
+dl,
+dt,
+dd,
+ul,
+ol,
+li,
+pre,
+form,
+button,
+input,
+textarea,
+th,
+td,
+fieldset {
+	margin: 0;
+	padding: 0
+}
+
+
+/*去掉列表标签的默认样式*/
+
+ul,
+ol,
+dl {
+	list-style-type: none
+}
+
+
+/*防止用户自定义背景颜色对网页的影响，添加让用户可以自定义字体 */
+
+html {
+	font-size: 100%;
+	/*所有的px尺寸/100*/
+}
+
+address,
+caption,
+cite,
+code,
+dfn,
+em,
+th,
+var {
+	font-style: normal;
+	font-weight: normal
+}
+
+input,
+button,
+textarea,
+select,
+optgroup,
+option {
+	font-family: inherit;
+	font-size: inherit;
+	font-style: inherit;
+	font-weight: inherit
+}
+button {
+	overflow: visible;
+	vertical-align: middle;
+	outline: none
+}
+/*@font-face {
+    font-family: 'PingFangSC-Regular';
+    speak: none;
+    font-style:normal;
+    font-variant: normal;
+	text-transform: none;
+  	-webkit-font-smoothing: antialiased;
+  	-moz-osx-font-smoothing: grayscale;
+    src: url('../fonts/PingFangSC-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'PingFangSC-Medium';
+    speak: none;
+    font-style:normal;
+    font-variant: normal;
+	text-transform: none;
+  	-webkit-font-smoothing: antialiased;
+  	-moz-osx-font-smoothing: grayscale;
+    src: url('../fonts/PingFangSC-Medium.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'PingFangSC-Semibold';
+    speak: none;
+    font-style:normal;
+    font-variant: normal;
+	text-transform: none;
+  	-webkit-font-smoothing: antialiased;
+  	-moz-osx-font-smoothing: grayscale;
+    src: url('../fonts/PingFangSC-Semibold.ttf') format('truetype');
+}*/
+html,
+body,
+th,
+td,
+button,
+input,
+select,
+textarea,
+span,
+p,
+div,
+a
+{
+	font-family: "PingFangSC-Regular","Microsoft YaHei", Arial, Helvetica, sans-serif, "SimSun";
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+	-webkit-text-size-adjust: none;
+}
+
+body,
+html {
+	-webkit-overflow-scrolling: touch;
+	height: 100%;
+	margin: 0;
+	position: relative;
+	padding-right: 0px !important;
+}
+
+hr {
+	-moz-box-sizing: content-box;
+	box-sizing: content-box;
+	height: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-size: 100%
+}
+
+a,
+area {
+	outline: none;
+	blr: expression(this.onFocus=this.blur())
+}
+
+a {
+	text-decoration: none;
+	color: #333;
+}
+
+a:hover {
+	text-decoration: none;
+	/*color:#fff !important;*/
+}
+
+a:focus {
+	outline: none;
+	text-decoration: none;
+}
+
+a:hover,
+a:active {
+	outline: none;
+	/*color:#51B44F;*/
+}
+
+:focus {
+	outline: none
+}
+
+sub,
+sup {
+	vertical-align: baseline
+}
+
+a,
+li,
+span,
+p {
+	transition: all 0.2s linear 0s;
+}
+
+
+/*IE下a:hover 背景闪烁*/
+
+/*html {
+	overflow: -moz-scrollbars-vertical;
+	zoom:expression(function(ele) {
+		ele.style.zoom="1";
+		document.execCommand("BackgroundImageCache", false, true)
+	}
+	(this))
+}*/
+
+img {
+	border: none;
+}
+
+
+/*---------------------HTML5 reset--------------------------*/
+
+header,
+footer,
+section,
+aside,
+details,
+menu,
+article,
+section,
+nav,
+address,
+hgroup,
+figure,
+figcaption,
+legend {
+	display: block;
+	margin: 0;
+	padding: 0
+}
+
+time {
+	display: inline
+}
+
+audio,
+canvas,
+video {
+	display: inline-block;
+	*display: inline;
+	*zoom: 1
+}
+
+audio:not([controls]) {
+	display: none
+}
+
+svg:not(:root) {
+	overflow: hidden
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	height: auto
+}
+
+input[type="search"] {
+	-webkit-appearance: textfield;
+	/* 1 */
+	-moz-box-sizing: content-box;
+	-webkit-box-sizing: content-box;
+	/* 2 */
+	box-sizing: content-box
+}
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+	-webkit-appearance: none
+}
+
+
+/* HTML5 媒体文件跟 img 保持一致 */
+
+audio,
+canvas,
+video,
+.inlineblock {
+	display: inline-block;
+	*display: inline;
+	*zoom: 1;
+}
+
+.block {
+	display: block;
+}
+/*HTML5新模块元素在IE8、9版本浏览器中没有被定义默认样式。为解决该问题，给下列元素添加“block”显示属性*/
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+nav,
+section,
+summary {
+	display: block;
+}
+
+a,
+p,
+button,
+i {
+	-webkit-tap-highlight-color: transparent;
+}
+
+
+/*浮动*/
+
+.fl {
+	float: left;
+	display: block;
+}
+
+.fr {
+	float: right;
+	display: block;
+}
+
+
+/*清除浮动*/
+
+.clearfix {
+	*zoom: 1;
+}
+
+
+/*解决ie6/7下面的浮动塌陷问题*/
+
+.clearfix:before,
+.clearfix:after {
+	display: table;
+	line-height: 0;
+	content: "";
+}
+
+
+/*display:table;解决其他下面的浮动塌陷问题,line-height是将添加的内容高度设为0；*/
+
+.clearfix:after {
+	clear: both;
+}
+
+.middle:after {
+	display: inline-block;
+	content: "";
+	height: 100%;
+	vertical-align: middle;
+}
+
+.hidden {
+	display: none;
+}
+
+.wrap {
+	height: 100%;
+}
+
+.container {
+	background: #f8f9fb;
+}
+
+a {
+	color: inherit;
+	transition: none;
+}
+textarea {
+	/*overflow-y:hidden;*/
+}
+input,textarea{
+   scrollbar-3dlight-color:transparent; 
+   scrollbar-highlight-color:transparent; 
+   scrollbar-face-color:transparent; 
+   scrollbar-arrow-color:transparent; 
+   scrollbar-shadow-color:transparent; 
+   scrollbar-darkshadow-color:transparent; 
+   scrollbar-base-color:transparent; 
+   scrollbar-track-color:transparent;
+}
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background-color: rgba(151, 157, 190, 0.3);
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    border-radius: 6px;
+    background-color: transparent;
+    height: 6px;
+    width: 6px;
+}
+::-ms-clear, ::-ms-reveal{display: none;}
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+	color: #D0D0D0;
+}
+
+input:-moz-placeholder,
+textarea:-moz-placeholder {
+	color: #D0D0D0;
+}
+input::placeholder,textarea::placeholder {
+	color: #D0D0D0;
+}
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+	color: #D0D0D0;
+}
+.el-input__inner:-webkit-input-placeholder,.el-textarea__inner:-webkit-input-placeholder{
+	color: #D0D0D0;
+}
+.el-input__inner:-moz-placeholder,.el-textarea__inner:-moz-placeholder{
+	color: #D0D0D0;
+}
+.el-input__inner:-ms-input-placeholder,.el-textarea__inner:-ms-input-placeholder{
+	color: #D0D0D0;
+}
+:-webkit-input-placeholder.el-input__inner,:-webkit-input-placeholder.el-textarea__inner{
+	color: #D0D0D0;
+}
+:-moz-placeholder.el-input__inner,:-moz-placeholder.el-textarea__inner{
+	color: #D0D0D0;
+}
+:-ms-input-placeholder.el-input__inner,:-ms-input-placeholder.el-textarea__inner{
+	color: #D0D0D0;
+}
+.el-input__inner::placeholder,.el-textarea__inner::placeholder {
+	color: #D0D0D0;
+}
+.mr0{
+	margin-right: 0;
+}
+
+.mt10 {
+	margin-top: 10px;
+}
+
+.mb2 {
+	margin-bottom: 2px;
+}
+
+.mb24 {
+	margin-bottom: 24px;
+}
+.w100 {
+	width: 100px;
+}

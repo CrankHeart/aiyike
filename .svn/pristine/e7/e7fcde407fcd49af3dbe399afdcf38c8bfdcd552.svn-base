@@ -1,0 +1,471 @@
+<template>
+	<section class="wrap-o">
+		<el-breadcrumb separator=">">
+			<el-breadcrumb-item>当前位置：日志管理</el-breadcrumb-item>
+			<el-breadcrumb-item>查询</el-breadcrumb-item>
+		</el-breadcrumb>
+		<div class="list-wrap mylog">
+			<el-form :model="searchParam" ref="searchParam"  class="soso clearfix margin-left8" label-width="70px">
+				<el-form-item class="label inlineblock startend marginright8" label="起止日期：">
+					<el-form-item prop="startTime" class="inlineblock">
+						<el-date-picker class="input_text" type="date" placeholder="开始日期" v-model="searchParam.startTime" style="width: 100%;" :editable="false" :picker-options="pickerBeginDateBefore"></el-date-picker>
+					</el-form-item>
+					<span class="line">-</span>
+					<el-form-item prop="endTime" class="inlineblock">
+						<el-date-picker class="input_text" type="date" placeholder="结束日期" v-model="searchParam.endTime" style="width: 100%;" :editable="false" :picker-options="pickerBeginDateAfter"></el-date-picker>
+					</el-form-item>
+				</el-form-item>
+				<el-form-item class="label inlineblock namecontent marginright8" label="所属项目：" prop="itemId" v-if="isPerformer">
+					<el-select v-model="searchParam.itemId" filterable  clearable placeholder="请选择">
+						<el-option v-for="item in items" :key="item.id" :label="item.name" :value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item class="label inlineblock namecontent marginright8" label="所属部门：" prop="departId" >
+					<el-select v-model="searchParam.departId" filterable  clearable placeholder="请选择">
+						<el-option v-for="item in departs" :key="item.id" :label="item.label" :value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item class="label inlineblock namecontent marginright8" label="姓名：" prop="ucId" label-width="46px">
+					<el-select v-model="searchParam.ucId" filterable  clearable placeholder="请选择">
+						<el-option v-for="item in ucNames" :key="item.id" :label="item.chName" :value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item class="label inlineblock namecontent marginright8" label="日志内容：" prop="content">
+					<el-input class="input_text" v-model="searchParam.content" placeholder="请输入关键字" :maxlength="50"></el-input>
+				</el-form-item>
+				<el-form-item class="search label">
+					<el-button type="primary" @click="resetForm('searchParam')" class="submitbtn">重置</el-button>
+					<el-button type="primary" @click="onSubmit(1)" class="submitbtn">搜索</el-button>
+				</el-form-item>
+			</el-form>
+			<div class="log-list">
+				<div class="log-list-item clearfix" v-for="(item, index) in listData" :key="index">
+					<div class="l data">
+						<p class="m">{{item.workTime|fmtMonthDay}}</p>
+						<p class="y">{{item.workTime|fmtYear}}</p>
+					</div>
+					<div class="r details" @mouseup="mouseup" @click="watchLogDetails(item.id)">
+						<div class="dsc clearfix">
+							<span class="l tips">工作类型：</span>
+							<div class="r type"><span class="primary-type">{{item.type|fmtLogType}}</span></div>
+						</div>
+						<div class="dsc">
+							<span class="dsc-item"><span class="tips">项目名称：</span><span class="t">{{item.itemName}}</span></span>
+							<span class="dsc-item"><span class="tips">正常工时：</span><span class="t">{{item.totalWorkHour}}h</span></span>
+							<span class="dsc-item"><span class="tips">其它工时：</span><span class="t">{{item.totalOverHour}}h</span></span>
+						</div>
+						<section class="evaluate clearfix">
+							<div class="from-area">
+								<span class="bm">{{item.depart}}：</span>
+								<span class="text">{{item.ucName}}</span>
+							</div>
+						</section>
+						<div class="aud-state" :state="item.status | fmtLogStatus"><span>{{item.status | fmtLogStatus}}</span></div>
+					</div>
+				</div>
+			</div>
+			<LoadMore :isloading.sync="isloading" v-show="showLoading"></LoadMore>
+			<LogDetails :visible.sync="logDetailsVisible":reportLogList="reportLogData" :dayLog="dayLog"></LogDetails>
+		</div>
+	</section>
+</template>
+
+<script>
+    let LoadMore = () => import('@/components/load-more/LoadMore.vue')
+    let LogDetails = () => import('@/modules/LogManagement/LogDetails.vue')
+    export default {
+        name: 'LogManagement_My',
+        created() {
+			vueIns = this
+		},
+        data() {
+            return {
+            	state: this.$store.state,
+                isloading: false,
+                showLoading:false,
+                logDetailsVisible: false,
+                isPerformer:JSON.parse(Cache.local(Config.Login)).uc.isPerformer==1?true:false,//true：执行人员 false:非执行人员
+                reportLogData:[],
+                dayLog:{},
+                searchParam: {
+                    userId:JSON.parse(Cache.local(Config.Login)).uc.id,
+                    isWriteLog:false,
+                    departId:'',
+                    order: 'DESC',
+                    startTime: '',
+                    endTime: '',
+                    itemId: '',
+                    ucId:'',
+                    content:'',
+                    curPage: 1
+                },
+                items:[],
+                ucNames:[],
+                departs:[],
+                remoteNameData: [],
+                remoteNameLoading: false,
+                nameList: [],
+/*                nameStates: ["Alabama", "Alaska", "Arizona",
+                    "Arkansas", "California", "Colorado",
+                    "Connecticut", "Delaware", "Florida",
+                    "Georgia", "Hawaii", "Idaho", "Illinois",
+                    "Indiana", "Iowa", "Kansas", "Kentucky",
+                    "Louisiana", "Maine", "Maryland",
+                    "Massachusetts", "Michigan", "Minnesota",
+                    "Mississippi", "Missouri", "Montana",
+                    "Nebraska", "Nevada", "New Hampshire",
+                    "New Jersey", "New Mexico", "New York",
+                    "North Carolina", "North Dakota", "Ohio",
+                    "Oklahoma", "Oregon", "Pennsylvania",
+                    "Rhode Island", "South Carolina",
+                    "South Dakota", "Tennessee", "Texas",
+                    "Utah", "Vermont", "Virginia",
+                    "Washington", "West Virginia", "Wisconsin",
+                    "Wyoming"
+                ],*/
+                listData: [],
+                //搜索结束时间需大于等于开始时间
+                pickerBeginDateBefore: {
+			            disabledDate(time) { 
+			              return time.getTime() > Date.now()|| (vueIns.searchParam.endTime && vueIns.searchParam.endTime.getTime && (time.getTime() > vueIns.searchParam.endTime.getTime()))
+			            }
+			    },
+          		pickerBeginDateAfter: {
+			            disabledDate(time) {  
+			              return time.getTime() > Date.now()|| (vueIns.searchParam.startTime && vueIns.searchParam.startTime.getTime && (time.getTime() < vueIns.searchParam.startTime.getTime())) 
+			            }  
+		        },
+		        searchFlag:false,
+		        textSelectFlag: true
+            }
+        },
+        watch: {
+    	  'state.logSearchReload'(val){
+            	if(val){
+            		this.onSubmit(1) 
+            	}
+           },
+            isloading(val) {
+                if(val) {
+                    setTimeout(() => {
+                        this.onSubmit(this.searchParam.curPage);
+                        this.isloading = false
+                    }, 500)
+                }
+            }
+         
+        },
+        components: {
+            LoadMore,
+            LogDetails
+        },
+        mounted: function() {
+            this.$nextTick(() => {
+                this.queryItems();
+                this.queryNames();
+                this.queryDeparts();
+                this.onSubmit(1);
+            });
+			/*		this.nameList = this.nameStates.map(item => {
+			 return {
+			 value: item,
+			 label: item
+			 };
+			 });*/
+        },
+        methods: {
+        	mouseup(e) {
+				var event = window.event || e;
+				var target = event.srcElement ? event.srcElement : event.target;
+				if(/input|textarea/i.test(target.tagName) && /firefox/i.test(navigator.userAgent)) {
+					//Firefox在文本框内选择文字
+					var staIndex = target.selectionStart;
+					var endIndex = target.selectionEnd;
+					if(staIndex != endIndex) {
+						var sText = target.value.substring(staIndex, endIndex);
+						this.textSelectFlag = false
+					} else {
+						this.textSelectFlag = true
+					}
+				} else {
+					//获取选中文字
+					var sText = document.selection == undefined ? document.getSelection().toString() : document.selection.createRange().text;
+					if(sText != "") {
+						this.textSelectFlag = false
+					} else {
+						this.textSelectFlag = true
+					}
+				}
+			},
+            remoteNameMethod(query) {
+                if(query !== '') {
+                    this.loading = true;
+                    setTimeout(() => {
+                        this.remoteNameLoading = false;
+                        this.remoteNameData = this.nameList.filter(item => {
+                            return item.label.toLowerCase()
+                                    .indexOf(query.toLowerCase()) > -1;
+                        });
+                    }, 200);
+                } else {
+                    this.remoteNameData = [];
+                }
+            },
+            queryItems() {
+                //查询员工项目列表
+                this.$http.post('/api/dayLogQuery/queryItemsByNoPm',this.searchParam,{
+                    emulateJSON: true
+                }).then((res) => {
+                    let result=res.data.result
+					let flag=res.data.success
+					if(flag){
+                        this.items = result;
+					}
+                }).catch((err) => {
+                    this.loading = false
+                    
+                })
+            },
+            queryNames() {
+                let userInfo = JSON.parse(Cache.local(Config.Login))
+                this.searchParam.userId=userInfo.uc.id
+                this.$http.post('/api/dayLogQuery/queryNamesByNoPm',this.searchParam,{
+                    emulateJSON: true
+                }).then((res) => {
+                    
+                    this.ucNames = res.data.result;
+                }).catch((err) => {
+                    this.loading = false
+                    
+                })
+
+            },
+            queryDeparts() {
+                let userInfo = JSON.parse(Cache.local(Config.Login))
+                this.searchParam.userId=userInfo.uc.id
+                this.$http.post('/api/dayLogQuery/queryDepartsByNoPm',this.searchParam,{
+                    emulateJSON: true
+                }).then((res) => {
+                    
+                    this.departs = res.data.result;
+                }).catch((err) => {
+                    
+                })
+
+            },
+            watchLogDetails(row) {
+            	if (this.textSelectFlag) {
+            		this.$http.post('/api/reportLog/queryReportLogAndDayLog?id='+row , {
+	                    emulateJSON: true
+	                }).then((res) => {
+	                	let result = res.data.result;
+	                	let success = res.data.success;
+	                	if(success && result){
+			                	this.reportLogData=[];
+			                    this.reportLogData.push(result);
+			                    this.dayLog=result.dayLog
+			                    this.logDetailsVisible = true
+	                	}
+	                }).catch((err) => {
+	                    
+	                });
+            	}
+            },
+            onSubmit(curPage) {
+            	if(this.searchFlag){
+            		return false;
+            	}
+            	this.searchFlag=true;
+                this.searchParam.curPage=curPage;
+                this.searchParam.startTime = (!!this.searchParam.startTime) ? new Date(this.searchParam.startTime).format("yyyy-MM-dd hh:mm:ss") : '';
+                this.searchParam.endTime = (!!this.searchParam.endTime) ? new Date(this.searchParam.endTime).fullCurTime().format("yyyy-MM-dd hh:mm:ss") : '';
+                this.$http.post('/api/dayLog/queryReportLogListByCondition',this.searchParam,{
+                    emulateJSON: true
+                }).then((res) => {
+                    let result=res.data.result.content
+                    let flag=res.data.success
+                    if(flag){
+                    	if(result.length>=10){
+                    		 this.showLoading=true
+                    	}else{
+                    		this.showLoading=false
+                    	}
+                    	if(this.searchParam.curPage==1){
+                        	this.listData = result;
+                    	}else{
+                        for(var i=0;i<result.length;i++){
+                            this.listData.push(result[i])
+                        	}
+                    	}
+                    this.searchParam.curPage=this.searchParam.curPage+1;
+                    }else{
+                    	 this.$message({
+                    	 	customClass: 'error',
+                            message: res.data.message
+                        });
+                    }
+                    this.searchFlag=false;
+                    console.log("log0",JSON.parse(JSON.stringify(this.listData)))
+                }).catch((err) => {
+                    
+                })
+            },
+            resetForm(formName){
+            	this.$refs[formName].resetFields();
+            	this.onSubmit(1);
+            }
+        }
+    }
+</script>
+
+<style scoped>
+	.startend,.namecontent {
+		margin-right: ;
+	}
+	
+	.el-icon-arrow-down {
+		font-size: 12px;
+	}
+	
+	.el-form-item {
+		margin-bottom: 2px;
+	}
+	.from-area {
+		float: right;
+		margin-right: 30px;
+	}
+	
+	.from-area .bm {
+		font-size: 12px;
+		color: #999999;
+	}
+	
+	.from-area .text {
+		font-size: 12px;
+		color: #000000;
+	}
+	
+	
+	.inlineblock {
+		display: inline-block;
+	}
+	
+	.input_text {
+		font-size: 12px;
+		color: #999999;
+	}
+	
+	.line {
+		width: 20px;
+	}
+	
+	.label {
+		font-size: 12px !important;
+		color: #666666 !important;
+	}
+	
+	.key {
+		width: 190px;
+	}
+	
+	.el-icon-arrow-down {
+		margin-left: 13px;
+	}
+	
+	.loadmore-block {
+		margin-top: 26px;
+		text-align: center;
+	}
+	
+	.loadMorebtn {
+		cursor: pointer;
+		font-size: 14px;
+		color: #5d5d5d;
+	}
+	
+	.sosobtn {
+		font-size: 14px;
+		color: #FFFFFF;
+		background: #295DCF;
+		border-radius: 2px;
+		width: 90px;
+		height: 30px;
+		line-height: 0px;
+		position: absolute;
+		right: 0px;
+		top: 4px;
+	}
+	.resetbtn {
+		font-size: 14px;
+		color: #FFFFFF;
+		background: #295DCF;
+		border-radius: 2px;
+		width: 90px;
+		height: 30px;
+		line-height: 0px;
+		position: absolute;
+		right: 100px;
+		top: 4px;
+	}
+	.search {
+		margin-right: 0;
+		position: absolute;
+		right: 0;
+		top: 0;
+	}
+	
+	.soso {
+		position: relative;
+		margin-bottom: 10px;
+		padding-right: 220px;
+	}
+	
+	.line {
+		text-align: center;
+	}
+	
+	.header {
+		height: 64px;
+	}
+	
+	.header .title {
+		font-size: 16px;
+		font-weight: bold;
+	}
+	
+	.worktab>.el-tabs__header {
+		background: #f8f9fb;
+	}
+	
+	.tabs {
+		margin-right: 334px;
+	}
+	
+	.todo-module {
+		position: absolute;
+		top: 0;
+		right: 0;
+	}
+	
+	.el-row {
+		height: auto;
+	}
+	
+	.box {
+		width: 50px;
+		height: 50px;
+		background: url('../../assets/img/audited.png');
+	}
+	.marginleft8{
+		margin-left: 8px;
+	}
+	.marginright8{
+		margin-right: 8px;
+	}
+	.mylog .log-list-item .dsc{
+		margin-bottom: -4px;
+	}
+</style>

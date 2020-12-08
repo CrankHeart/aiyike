@@ -1,0 +1,198 @@
+<template>
+	<el-dialog @close="closeDialog" :title="dialogTitle" :visible.sync="dialogVisible" class="Project_Term_Dialog dialogPosition height58">
+		<el-form ref="form" :model="form">
+			<el-form-item
+					prop="reason"
+					:rules="[
+                  { required: true, message: '原因不能为空'}
+                ]">
+				<el-input type="textarea"  placeholder="请填写原因" v-model="form.reason"></el-input>
+			</el-form-item>
+		</el-form>
+		<span slot="footer" class="dialog-footer">
+	    	<el-button class="submitbtn" type="primary" @click="sure('form')">确定</el-button>
+		    <el-button class="cancelbtn" @click="cancel('form')">取消</el-button>
+	    </span>
+	</el-dialog>
+</template>
+ 
+<script>
+
+export default {
+  name: "OutItemStateDialog",
+  props: {
+    visible: {
+      type: Boolean,
+      default: false
+    },
+    titleType: ""
+  },
+  watch: {
+    visible(val) {
+      this.dialogVisible = val;
+    },
+    dialogVisible(val) {
+      if (val) {
+        this.$nextTick(() => {
+          this.dialogInit();
+        });
+      }
+      this.$emit("update:visible", val);
+    },
+    titleType(val) {
+      this.dialogInit();
+    }
+  },
+  data() {
+    return {
+      type: "",
+      dialogVisible: false,
+      dialogTitle: "",
+      restfulUrl: "",
+      form: {
+        applyId: parseInt(this.$route.params.id.split("-")[0]),
+        reason: ""
+      }
+    };
+  },
+  components: {
+  },
+  mounted: function() {
+    this.dialogVisible = this.visible;
+  },
+  methods: {
+    closeDialog() {
+      this.resetForm("form");
+    },
+    resetForm(formName) {
+      this.$refs[formName].resetFields();
+    },
+    dialogInit() {
+      this.type = this.titleType;
+      this.obtainRestfulByType(this.type);
+      this.obtainTitle(this.type);
+    },
+    obtainRestfulByType(type) {
+      switch (type) {
+        case "hangUpByOut":
+          this.restfulUrl = "/api/itemOut/hangUpByOut";
+          break;
+        case "stopByOut":
+          this.restfulUrl = "/api/itemOut/stopByOut";
+          break;
+        case "finishByOut":
+          this.restfulUrl = "/api/itemOut/finishByOut";
+          break;
+        default:
+          alert("obtainRestfulByType fail");
+          break;
+      }
+    },
+    obtainTitle(type) {
+      switch (type) {
+        case "finishByOut":
+          this.dialogTitle = "项目结项";
+          break;
+        case "hangUpByOut":
+          this.dialogTitle = "项目挂起";
+          break;
+        case "stopByOut":
+          this.dialogTitle = "项目中止";
+          break;
+        default:
+          alert("obtainTitle fail");
+          break;
+      }
+    },
+    sure(formName) {
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          this.$http
+            .post(this.restfulUrl, this.form, {
+              emulateJSON: true
+            })
+            .then(res => {
+              if (res.data.success) {
+                this.$message({
+                  message: "提交成功",
+                  customClass: "success"
+                });
+                this.dialogVisible = false;
+                switch (this.type) {
+				  case "hangUpByOut":
+				  	this.$emit('refreshList',11)
+                    break;
+                  case "stopByOut":
+				  	this.$emit('refreshList',12)
+                    break;
+                  case "finishByOut":
+				  	this.$emit('refreshList',13)
+                    break;
+                  default:
+                    alert("changeStatus fail");
+                    break;
+                }
+              } else {
+                this.$message({
+                  message: res.data.message,
+                  customClass: "error"
+                });
+              }
+            })
+            .catch(err => {});
+        } else {
+          return false;
+        }
+      });
+    },
+    cancel(formName) {
+      this.$refs[formName].resetFields();
+      this.dialogVisible = false;
+    }
+  }
+};
+</script>
+
+<style scoped>
+/*公用部分*/
+
+.dialogPosition .el-dialog {
+  top: 50% !important;
+  transform: translate(-50%, -50%);
+}
+
+.dialogPosition .el-dialog__title {
+  font-size: 16px;
+  color: #000000;
+  font-weight: normal;
+}
+
+.el-dialog__footer {
+  text-align: center !important;
+}
+
+/*公用部分end*/
+/*项目挂起*/
+
+.hang-title {
+  font-size: 12px;
+  color: #000000;
+  margin-bottom: 10px;
+}
+
+textarea.hangtext {
+  display: block;
+  padding: 5px;
+  border: 1px solid #eee;
+  width: 100% !important;
+  height: 80px !important;
+  font-size: 12px;
+  line-height: 20px;
+  resize: none;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+
+/*项目挂起end*/
+</style>
